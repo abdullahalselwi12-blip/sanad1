@@ -16,12 +16,186 @@ import { formatDate } from '@/utils';
 
 import type { Law, LawCategory } from '@/types';
 
+const SITE_URL = 'https://sanad1-beryl.vercel.app';
+
+function setMetaTag(
+  attribute: 'name' | 'property',
+  key: string,
+  content: string
+) {
+  let meta = document.head.querySelector(
+    `meta[${attribute}="${key}"]`
+  ) as HTMLMetaElement | null;
+
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute(attribute, key);
+    document.head.appendChild(meta);
+  }
+
+  meta.setAttribute('content', content);
+}
+
+function setCanonical(url: string) {
+  let canonical = document.head.querySelector(
+    'link[rel="canonical"]'
+  ) as HTMLLinkElement | null;
+
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonical);
+  }
+
+  canonical.setAttribute('href', url);
+}
+
+function setJsonLd(data: Record<string, unknown>) {
+  const id = 'sanad-laws-jsonld';
+
+  let script = document.getElementById(
+    id
+  ) as HTMLScriptElement | null;
+
+  if (!script) {
+    script = document.createElement('script');
+    script.id = id;
+    script.type = 'application/ld+json';
+    document.head.appendChild(script);
+  }
+
+  script.textContent = JSON.stringify(data);
+}
+
 export function LawsPage() {
   const [laws, setLaws] = useState<Law[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] =
     useState<LawCategory | 'all'>('all');
+
+  /*
+   * ============================================================
+   * SEO
+   * ============================================================
+   */
+
+  useEffect(() => {
+    const title =
+      'القوانين اليمنية | مكتبة القوانين اليمنية - SANAD';
+
+    const description =
+      'مكتبة القوانين اليمنية في SANAD. ابحث وتصفح القوانين اليمنية والمواد القانونية في مجالات القانون المدني والجنائي والتجاري والأسرة والعمل وغيرها.';
+
+    document.title = title;
+
+    document.documentElement.lang = 'ar';
+    document.documentElement.dir = 'rtl';
+
+    setMetaTag('name', 'description', description);
+
+    setMetaTag(
+      'name',
+      'keywords',
+      'القوانين اليمنية, القانون اليمني, قوانين اليمن, مواد القانون اليمني, مكتبة القوانين اليمنية, قانون العمل اليمني, القانون المدني اليمني, القانون الجنائي اليمني, القانون التجاري اليمني, الأحوال الشخصية اليمنية, SANAD'
+    );
+
+    setMetaTag(
+      'name',
+      'robots',
+      'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+    );
+
+    setMetaTag(
+      'property',
+      'og:type',
+      'website'
+    );
+
+    setMetaTag(
+      'property',
+      'og:title',
+      title
+    );
+
+    setMetaTag(
+      'property',
+      'og:description',
+      description
+    );
+
+    setMetaTag(
+      'property',
+      'og:url',
+      `${SITE_URL}/laws`
+    );
+
+    setMetaTag(
+      'property',
+      'og:locale',
+      'ar_YE'
+    );
+
+    setMetaTag(
+      'property',
+      'og:site_name',
+      'SANAD'
+    );
+
+    setMetaTag(
+      'name',
+      'twitter:card',
+      'summary'
+    );
+
+    setMetaTag(
+      'name',
+      'twitter:title',
+      title
+    );
+
+    setMetaTag(
+      'name',
+      'twitter:description',
+      description
+    );
+
+    setCanonical(`${SITE_URL}/laws`);
+
+    setJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: title,
+      description,
+      url: `${SITE_URL}/laws`,
+      inLanguage: 'ar-YE',
+      isPartOf: {
+        '@type': 'WebSite',
+        name: 'SANAD',
+        url: SITE_URL,
+      },
+      about: {
+        '@type': 'Thing',
+        name: 'القوانين اليمنية',
+      },
+    });
+
+    return () => {
+      const script = document.getElementById(
+        'sanad-laws-jsonld'
+      );
+
+      if (script) {
+        script.remove();
+      }
+    };
+  }, []);
+
+  /*
+   * ============================================================
+   * Load Laws
+   * ============================================================
+   */
 
   useEffect(() => {
     (async () => {
@@ -58,22 +232,22 @@ export function LawsPage() {
   }, [search, category]);
 
   return (
-    <main className="container-page section-padding py-12">
-
+    <main
+      className="container-page section-padding py-12"
+      dir="rtl"
+    >
       {/* =====================================================
-          Page Header
+          SEO-friendly Page Header
          ===================================================== */}
 
       <div className="mb-8">
-
         <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
-          مكتبة القوانين
+          القوانين اليمنية
         </h1>
 
         <p className="text-navy-500 dark:text-navy-400">
-          تصفح وابحث في القوانين اليمنية وموادها القانونية
+          مكتبة القوانين اليمنية وموادها القانونية
         </p>
-
       </div>
 
       {/* =====================================================
@@ -85,7 +259,7 @@ export function LawsPage() {
         {/* Search */}
 
         <Input
-          placeholder="ابحث في القوانين..."
+          placeholder="ابحث في القوانين اليمنية..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           icon={<Search className="w-4 h-4" />}
@@ -229,7 +403,7 @@ export function LawsPage() {
 
                   <FileText className="w-3.5 h-3.5" />
 
-                  عرض المواد
+                  عرض المواد القانونية
 
                 </span>
 
