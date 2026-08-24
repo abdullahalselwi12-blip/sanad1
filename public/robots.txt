@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sanad1-beryl.vercel.app/sitemap.xml
