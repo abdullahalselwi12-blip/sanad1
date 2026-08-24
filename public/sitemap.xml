@@ -1,32 +1,195 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <!-- الصفحة الرئيسية -->
   <url>
     <loc>https://sanad1-beryl.vercel.app/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-
-  <!-- القوانين -->
   <url>
     <loc>https://sanad1-beryl.vercel.app/laws</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
   </url>
-
-  <!-- المساعد القانوني -->
   <url>
     <loc>https://sanad1-beryl.vercel.app/assistant</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.90</priority>
   </url>
-
-  <!-- المحامون -->
   <url>
     <loc>https://sanad1-beryl.vercel.app/lawyers</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.80</priority>
   </url>
-
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/documents</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/consultations</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/ec7a83ef-5bbf-436b-b661-f8b6e16b81c2</loc>
+    <lastmod>2026-08-04T21:52:46.942Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/5766580b-f832-4d84-a3e1-62b424f13969</loc>
+    <lastmod>2026-08-04T21:52:46.942Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/af077f8c-ed0d-4dc6-81e0-614d6feb8b51</loc>
+    <lastmod>2026-08-04T21:52:46.942Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/98f73424-6a05-4259-a9b0-90cbf4f03564</loc>
+    <lastmod>2026-08-04T21:52:46.942Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/b682a917-6271-4ad1-87dc-63f131b60539</loc>
+    <lastmod>2026-08-04T21:52:46.942Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/ec7a83ef-5bbf-436b-b661-f8b6e16b81c2/article/1</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/ec7a83ef-5bbf-436b-b661-f8b6e16b81c2/article/2</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/ec7a83ef-5bbf-436b-b661-f8b6e16b81c2/article/148</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/ec7a83ef-5bbf-436b-b661-f8b6e16b81c2/article/149</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/ec7a83ef-5bbf-436b-b661-f8b6e16b81c2/article/150</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/ec7a83ef-5bbf-436b-b661-f8b6e16b81c2/article/210</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/ec7a83ef-5bbf-436b-b661-f8b6e16b81c2/article/211</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/5766580b-f832-4d84-a3e1-62b424f13969/article/1</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/5766580b-f832-4d84-a3e1-62b424f13969/article/2</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/5766580b-f832-4d84-a3e1-62b424f13969/article/3</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/af077f8c-ed0d-4dc6-81e0-614d6feb8b51/article/1</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/af077f8c-ed0d-4dc6-81e0-614d6feb8b51/article/2</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/af077f8c-ed0d-4dc6-81e0-614d6feb8b51/article/50</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/98f73424-6a05-4259-a9b0-90cbf4f03564/article/1</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/98f73424-6a05-4259-a9b0-90cbf4f03564/article/2</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/98f73424-6a05-4259-a9b0-90cbf4f03564/article/3</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/98f73424-6a05-4259-a9b0-90cbf4f03564/article/40</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/98f73424-6a05-4259-a9b0-90cbf4f03564/article/41</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/b682a917-6271-4ad1-87dc-63f131b60539/article/1</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/b682a917-6271-4ad1-87dc-63f131b60539/article/2</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/b682a917-6271-4ad1-87dc-63f131b60539/article/3</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sanad1-beryl.vercel.app/laws/b682a917-6271-4ad1-87dc-63f131b60539/article/4</loc>
+    <lastmod>2026-08-04T21:53:02.469Z</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
 </urlset>
