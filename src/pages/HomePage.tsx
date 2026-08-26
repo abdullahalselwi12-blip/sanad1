@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Scale,
   Bot,
@@ -73,6 +74,15 @@ function setJsonLd(data: Record<string, unknown>) {
 }
 
 export function HomePage() {
+  const { user } = useAuth();
+
+  const dashboardPath =
+    user?.role === 'admin'
+      ? '/admin'
+      : user?.role === 'lawyer'
+        ? '/lawyer'
+        : '/dashboard';
+
   /*
    * ============================================================
    * SEO
@@ -341,16 +351,18 @@ export function HomePage() {
 
               </Link>
 
-              <Link to="/register">
+              {!user ? (
+                <Link to="/register">
 
-                <Button
-                  variant="secondary"
-                  className="text-base px-7 py-3 bg-white/10 text-white border-white/20 hover:bg-white/20"
-                >
-                  إنشاء حساب مجاني
-                </Button>
+                  <Button
+                    variant="secondary"
+                    className="text-base px-7 py-3 bg-white/10 text-white border-white/20 hover:bg-white/20"
+                  >
+                    إنشاء حساب مجاني
+                  </Button>
 
-              </Link>
+                </Link>
+              ) : null}
 
             </div>
 
@@ -628,16 +640,29 @@ export function HomePage() {
 
           </p>
 
-          <Link to="/register">
+          {!user ? (
+            <Link to="/register">
 
-            <Button
-              variant="primary"
-              className="text-base px-8 py-3"
-            >
-              إنشاء حساب مجاني
-            </Button>
+              <Button
+                variant="primary"
+                className="text-base px-8 py-3"
+              >
+                إنشاء حساب مجاني
+              </Button>
 
-          </Link>
+            </Link>
+          ) : (
+            <Link to={dashboardPath}>
+
+              <Button
+                variant="primary"
+                className="text-base px-8 py-3"
+              >
+                الذهاب إلى لوحة التحكم
+              </Button>
+
+            </Link>
+          )}
 
         </div>
 

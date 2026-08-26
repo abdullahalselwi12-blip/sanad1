@@ -55,7 +55,11 @@ export function LawyersPage() {
           {filtered.map((lawyer) => (
             <div key={lawyer.id} className="card p-6 hover:shadow-elevated transition-shadow">
               <div className="flex items-start gap-4 mb-4">
-                <Avatar name={lawyer.profile?.full_name} src={lawyer.profile?.avatar_url} size="lg" />
+              <Avatar
+  name={lawyer.profile?.full_name ?? null}
+  src={lawyer.profile?.avatar_url}
+  size="lg"
+/>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <h3 className="font-semibold text-navy-900 dark:text-navy-100 truncate">{lawyer.profile?.full_name}</h3>
