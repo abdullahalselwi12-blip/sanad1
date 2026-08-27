@@ -88,9 +88,6 @@ export const DASHBOARD_NAV = [
 
 export const LAWYER_NAV = [
   { label: 'لوحتي', path: '/lawyer', icon: 'LayoutDashboard' },
-  { label: 'قضاياي', path: '/lawyer/cases', icon: 'Briefcase' },
-  { label: 'عملائي', path: '/lawyer/clients', icon: 'Users' },
-  { label: 'الجلسات', path: '/lawyer/sessions', icon: 'Calendar' },
   { label: 'الاستشارات', path: '/lawyer/consultations', icon: 'MessageSquare' },
   { label: 'الإعدادات', path: '/lawyer/settings', icon: 'Settings' },
 ] as const;
