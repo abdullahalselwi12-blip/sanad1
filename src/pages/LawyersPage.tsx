@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Scale, MapPin, Star, BadgeCheck, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -19,6 +20,7 @@ export function LawyersPage() {
         .select('*, profile:profiles(*)')
         .eq('is_verified', true)
         .order('rating', { ascending: false });
+
       setLawyers((data || []) as Lawyer[]);
       setLoading(false);
     })();
@@ -26,15 +28,25 @@ export function LawyersPage() {
 
   const filtered = lawyers.filter((l) => {
     if (!search) return true;
+
     const name = l.profile?.full_name || '';
-    return name.includes(search) || (l.specialization || '').includes(search);
+
+    return (
+      name.includes(search) ||
+      (l.specialization || '').includes(search)
+    );
   });
 
   return (
     <div className="container-page section-padding py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">دليل المحامين</h1>
-        <p className="text-navy-500 dark:text-navy-400">اعثر على محامين معتمدين متخصصين في مختلف المجالات القانونية</p>
+        <h1 className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
+          دليل المحامين
+        </h1>
+
+        <p className="text-navy-500 dark:text-navy-400">
+          اعثر على محامين معتمدين متخصصين في مختلف المجالات القانونية
+        </p>
       </div>
 
       <div className="mb-6">
@@ -47,40 +59,95 @@ export function LawyersPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+        <div className="flex justify-center py-20">
+          <Spinner size="lg" />
+        </div>
       ) : filtered.length === 0 ? (
-        <EmptyState icon={<Scale className="w-16 h-16" />} title="لا يوجد محامون" description="لم نعثر على محامين مطابقين لبحثك" />
+        <EmptyState
+          icon={<Scale className="w-16 h-16" />}
+          title="لا يوجد محامون"
+          description="لم نعثر على محامين مطابقين لبحثك"
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((lawyer) => (
-            <div key={lawyer.id} className="card p-6 hover:shadow-elevated transition-shadow">
-              <div className="flex items-start gap-4 mb-4">
-              <Avatar
-  name={lawyer.profile?.full_name ?? null}
-  src={lawyer.profile?.avatar_url}
-  size="lg"
-/>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-semibold text-navy-900 dark:text-navy-100 truncate">{lawyer.profile?.full_name}</h3>
-                    {lawyer.is_verified && <BadgeCheck className="w-4 h-4 text-royal-500 shrink-0" />}
-                  </div>
-                  {lawyer.specialization && <p className="text-sm text-navy-500 dark:text-navy-400 mt-0.5">{lawyer.specialization}</p>}
-                  {lawyer.rating ? (
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="w-3.5 h-3.5 text-gold-500 fill-gold-500" />
-                      <span className="text-xs text-navy-500">{Number(lawyer.rating).toFixed(1)}</span>
+            <Link
+              key={lawyer.id}
+              to={`/lawyers/${lawyer.id}`}
+              className="block group"
+            >
+              <div className="card p-6 h-full hover:shadow-elevated hover:border-royal-300 dark:hover:border-royal-700 transition-all duration-200">
+                <div className="flex items-start gap-4 mb-4">
+                  <Avatar
+                    name={lawyer.profile?.full_name ?? null}
+                    src={lawyer.profile?.avatar_url}
+                    size="lg"
+                  />
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-semibold text-navy-900 dark:text-navy-100 truncate group-hover:text-royal-600 dark:group-hover:text-royal-400 transition-colors">
+                        {lawyer.profile?.full_name || 'محامٍ'}
+                      </h3>
+
+                      {lawyer.is_verified && (
+                        <BadgeCheck className="w-4 h-4 text-royal-500 shrink-0" />
+                      )}
                     </div>
-                  ) : null}
+
+                    {lawyer.specialization && (
+                      <p className="text-sm text-navy-500 dark:text-navy-400 mt-0.5">
+                        {lawyer.specialization}
+                      </p>
+                    )}
+
+                    {lawyer.rating ? (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star className="w-3.5 h-3.5 text-gold-500 fill-gold-500" />
+                        <span className="text-xs text-navy-500">
+                          {Number(lawyer.rating).toFixed(1)}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {lawyer.bio && (
+                  <p className="text-sm text-navy-600 dark:text-navy-300 line-clamp-2 mb-4">
+                    {lawyer.bio}
+                  </p>
+                )}
+
+                <div className="space-y-2 text-xs text-navy-500 dark:text-navy-400">
+                  {lawyer.experience_years && (
+                    <p>
+                      سنوات الخبرة: {lawyer.experience_years}
+                    </p>
+                  )}
+
+                  {lawyer.office_address && (
+                    <p className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {lawyer.office_address}
+                    </p>
+                  )}
+
+                  {lawyer.license_number && (
+                    <p className="flex items-center gap-1.5">
+                      <Badge variant="navy">
+                        رخصة: {lawyer.license_number}
+                      </Badge>
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-navy-100 dark:border-navy-800">
+                  <span className="text-sm font-medium text-royal-600 dark:text-royal-400 group-hover:text-royal-700">
+                    عرض السيرة الذاتية ←
+                  </span>
                 </div>
               </div>
-              {lawyer.bio && <p className="text-sm text-navy-600 dark:text-navy-300 line-clamp-2 mb-4">{lawyer.bio}</p>}
-              <div className="space-y-2 text-xs text-navy-500 dark:text-navy-400">
-                {lawyer.experience_years && <p>سنوات الخبرة: {lawyer.experience_years}</p>}
-                {lawyer.office_address && <p className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {lawyer.office_address}</p>}
-                {lawyer.license_number && <p className="flex items-center gap-1.5"><Badge variant="navy">رخصة: {lawyer.license_number}</Badge></p>}
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

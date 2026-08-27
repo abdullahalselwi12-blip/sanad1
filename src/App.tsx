@@ -1,14 +1,18 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PageLoader } from '@/components/ui/Spinner';
+
 import { MainLayout } from '@/layouts/MainLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { AdminLayout } from '@/layouts/AdminLayout';
+
 import { DASHBOARD_NAV, LAWYER_NAV } from '@/constants';
 
 // ============================================================
@@ -16,68 +20,76 @@ import { DASHBOARD_NAV, LAWYER_NAV } from '@/constants';
 // ============================================================
 
 const HomePage = lazy(() =>
-  import('@/pages/HomePage').then(m => ({
+  import('@/pages/HomePage').then((m) => ({
     default: m.HomePage,
   }))
 );
 
 const LawsPage = lazy(() =>
-  import('@/pages/LawsPage').then(m => ({
+  import('@/pages/LawsPage').then((m) => ({
     default: m.LawsPage,
   }))
 );
 
 // صفحات القوانين الجديدة لتحسين SEO
 const LawDetailsPage = lazy(() =>
-  import('@/pages/LawDetailsPage').then(m => ({
+  import('@/pages/LawDetailsPage').then((m) => ({
     default: m.LawDetailsPage,
   }))
 );
 
 const ArticlePage = lazy(() =>
-  import('@/pages/ArticlePage').then(m => ({
+  import('@/pages/ArticlePage').then((m) => ({
     default: m.ArticlePage,
   }))
 );
 
+// دليل المحامين
 const LawyersPage = lazy(() =>
-  import('@/pages/LawyersPage').then(m => ({
+  import('@/pages/LawyersPage').then((m) => ({
     default: m.LawyersPage,
   }))
 );
 
+// صفحة السيرة الذاتية للمحامي
+const LawyerProfilePage = lazy(() =>
+  import('@/pages/LawyerProfilePage').then((m) => ({
+    default: m.LawyerProfilePage,
+  }))
+);
+
 const AssistantPage = lazy(() =>
-  import('@/pages/AssistantPage').then(m => ({
+  import('@/pages/AssistantPage').then((m) => ({
     default: m.AssistantPage,
   }))
 );
 
 const DocumentsPage = lazy(() =>
-  import('@/pages/DocumentsPage').then(m => ({
+  import('@/pages/DocumentsPage').then((m) => ({
     default: m.DocumentsPage,
   }))
 );
 
 const ConsultationsPage = lazy(() =>
-  import('@/pages/ConsultationsPage').then(m => ({
+  import('@/pages/ConsultationsPage').then((m) => ({
     default: m.ConsultationsPage,
   }))
 );
 
 const NotificationsPage = lazy(() =>
-  import('@/pages/NotificationsPage').then(m => ({
+  import('@/pages/NotificationsPage').then((m) => ({
     default: m.NotificationsPage,
   }))
 );
 
 const SettingsPage = lazy(() =>
-  import('@/pages/SettingsPage').then(m => ({
+  import('@/pages/SettingsPage').then((m) => ({
     default: m.SettingsPage,
   }))
 );
 
 const StaticPage = lazy(() =>
-  import('@/pages/StaticPage').then(m => ({
+  import('@/pages/StaticPage').then((m) => ({
     default: m.StaticPage,
   }))
 );
@@ -87,25 +99,25 @@ const StaticPage = lazy(() =>
 // ============================================================
 
 const LoginPage = lazy(() =>
-  import('@/pages/auth/LoginPage').then(m => ({
+  import('@/pages/auth/LoginPage').then((m) => ({
     default: m.LoginPage,
   }))
 );
 
 const RegisterPage = lazy(() =>
-  import('@/pages/auth/RegisterPage').then(m => ({
+  import('@/pages/auth/RegisterPage').then((m) => ({
     default: m.RegisterPage,
   }))
 );
 
 const ForgotPasswordPage = lazy(() =>
-  import('@/pages/auth/ForgotPasswordPage').then(m => ({
+  import('@/pages/auth/ForgotPasswordPage').then((m) => ({
     default: m.ForgotPasswordPage,
   }))
 );
 
 const ResetPasswordPage = lazy(() =>
-  import('@/pages/auth/ResetPasswordPage').then(m => ({
+  import('@/pages/auth/ResetPasswordPage').then((m) => ({
     default: m.ResetPasswordPage,
   }))
 );
@@ -115,25 +127,25 @@ const ResetPasswordPage = lazy(() =>
 // ============================================================
 
 const UserDashboard = lazy(() =>
-  import('@/pages/dashboard/UserDashboard').then(m => ({
+  import('@/pages/dashboard/UserDashboard').then((m) => ({
     default: m.UserDashboard,
   }))
 );
 
 const DashboardConsultations = lazy(() =>
-  import('@/pages/dashboard/DashboardConsultations').then(m => ({
+  import('@/pages/dashboard/DashboardConsultations').then((m) => ({
     default: m.DashboardConsultations,
   }))
 );
 
 const DashboardDocuments = lazy(() =>
-  import('@/pages/dashboard/DashboardDocuments').then(m => ({
+  import('@/pages/dashboard/DashboardDocuments').then((m) => ({
     default: m.DashboardDocuments,
   }))
 );
 
 const DashboardConversations = lazy(() =>
-  import('@/pages/dashboard/DashboardConversations').then(m => ({
+  import('@/pages/dashboard/DashboardConversations').then((m) => ({
     default: m.DashboardConversations,
   }))
 );
@@ -143,13 +155,13 @@ const DashboardConversations = lazy(() =>
 // ============================================================
 
 const LawyerDashboard = lazy(() =>
-  import('@/pages/lawyer/LawyerDashboard').then(m => ({
+  import('@/pages/lawyer/LawyerDashboard').then((m) => ({
     default: m.LawyerDashboard,
   }))
 );
 
 const LawyerConsultations = lazy(() =>
-  import('@/pages/lawyer/LawyerConsultations').then(m => ({
+  import('@/pages/lawyer/LawyerConsultations').then((m) => ({
     default: m.LawyerConsultations,
   }))
 );
@@ -159,79 +171,79 @@ const LawyerConsultations = lazy(() =>
 // ============================================================
 
 const AdminDashboard = lazy(() =>
-  import('@/pages/admin/AdminDashboard').then(m => ({
+  import('@/pages/admin/AdminDashboard').then((m) => ({
     default: m.AdminDashboard,
   }))
 );
 
 const AdminUsers = lazy(() =>
-  import('@/pages/admin/AdminUsers').then(m => ({
+  import('@/pages/admin/AdminUsers').then((m) => ({
     default: m.AdminUsers,
   }))
 );
 
 const AdminLawyers = lazy(() =>
-  import('@/pages/admin/AdminLawyers').then(m => ({
+  import('@/pages/admin/AdminLawyers').then((m) => ({
     default: m.AdminLawyers,
   }))
 );
 
 const AdminLaws = lazy(() =>
-  import('@/pages/admin/AdminLaws').then(m => ({
+  import('@/pages/admin/AdminLaws').then((m) => ({
     default: m.AdminLaws,
   }))
 );
 
 const AdminMedia = lazy(() =>
-  import('@/pages/admin/AdminMedia').then(m => ({
+  import('@/pages/admin/AdminMedia').then((m) => ({
     default: m.AdminMedia,
   }))
 );
 
 const AdminNews = lazy(() =>
-  import('@/pages/admin/AdminNews').then(m => ({
+  import('@/pages/admin/AdminNews').then((m) => ({
     default: m.AdminNews,
   }))
 );
 
 const AdminPages = lazy(() =>
-  import('@/pages/admin/AdminPages').then(m => ({
+  import('@/pages/admin/AdminPages').then((m) => ({
     default: m.AdminPages,
   }))
 );
 
 const AdminNotifications = lazy(() =>
-  import('@/pages/admin/AdminNotifications').then(m => ({
+  import('@/pages/admin/AdminNotifications').then((m) => ({
     default: m.AdminNotifications,
   }))
 );
 
 const AdminConsultations = lazy(() =>
-  import('@/pages/admin/AdminConsultations').then(m => ({
+  import('@/pages/admin/AdminConsultations').then((m) => ({
     default: m.AdminConsultations,
   }))
 );
 
 const AdminContracts = lazy(() =>
-  import('@/pages/admin/AdminContracts').then(m => ({
+  import('@/pages/admin/AdminContracts').then((m) => ({
     default: m.AdminContracts,
   }))
 );
 
 const AdminAIConversations = lazy(() =>
-  import('@/pages/admin/AdminAIConversations').then(m => ({
+  import('@/pages/admin/AdminAIConversations').then((m) => ({
     default: m.AdminAIConversations,
   }))
 );
 
 const AdminSecurity = lazy(() =>
-  import('@/pages/admin/AdminSecurity').then(m => ({
+  import('@/pages/admin/AdminSecurity').then((m) => ({
     default: m.AdminSecurity,
   }))
 );
 
 const AdminSettings = lazy(() =>
-  import('@/pages/admin/AdminSettings').then(m => ({
+  import('@/pages/admin/AdminSettings').then((m) => ({
     default: m.AdminSettings,
   }))
 );
@@ -284,6 +296,12 @@ export default function App() {
                   <Route
                     path="/lawyers"
                     element={<LawyersPage />}
+                  />
+
+                  {/* السيرة الذاتية للمحامي */}
+                  <Route
+                    path="/lawyers/:id"
+                    element={<LawyerProfilePage />}
                   />
 
                   {/* المساعد القانوني */}
