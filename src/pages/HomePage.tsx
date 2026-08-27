@@ -313,7 +313,7 @@ export function HomePage() {
               <Sparkles className="w-4 h-4" />
 
               <span>
-                منصة قانونية يمنية متكاملة
+                منصة قانونية يمنية 
               </span>
 
             </div>
