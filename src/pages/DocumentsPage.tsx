@@ -1,7 +1,17 @@
 import { useState } from 'react';
-import { FileText, Download, Save, FileSignature } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle,
+  Download,
+  FileSignature,
+  FileText,
+  Printer,
+  Save,
+  ShieldCheck,
+} from 'lucide-react';
+
 import { Button } from '@/components/ui/Button';
-import { Input, Textarea, Select } from '@/components/ui/Input';
+import { Input, Textarea } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -12,16 +22,17 @@ import type { DocumentType } from '@/types';
 /*
 ========================================================
  SANAD - Legal Document Generator
- نظام موحد لإنشاء الوثائق القانونية بصيغة A4
+ مولد الوثائق القانونية
 ========================================================
 
- ملاحظات:
- - لا يحتاج مكتبة خارجية.
- - لا يغير Supabase.
- - لا يغير جدول documents.
- - لا يغير نظام تسجيل الدخول.
- - يحافظ على الحفظ الحالي.
- - الطباعة تتم من المتصفح مباشرة.
+ - يحافظ على Supabase
+ - يحافظ على جدول documents
+ - يحافظ على نظام تسجيل الدخول
+ - يحافظ على أنواع الوثائق الحالية
+ - متوافق مع الهاتف والكمبيوتر
+ - لا يعرض ورقة A4 ضخمة داخل الهاتف
+ - فتح / تحميل / طباعة / حفظ
+========================================================
 */
 
 type Field = {
@@ -41,58 +52,73 @@ type TemplateKey =
   | 'company'
   | 'other';
 
-/*
-========================================================
- أنواع الوثائق الظاهرة للمستخدم
-========================================================
-*/
-
-const TEMPLATE_TYPES: {
+type Template = {
   key: TemplateKey;
   title: string;
   description: string;
   dbType: DocumentType;
-}[] = [
+};
+
+/*
+========================================================
+ أنواع الوثائق
+========================================================
+*/
+
+const TEMPLATE_TYPES: Template[] = [
   {
     key: 'marriage',
     title: 'عقد زواج',
-    description: 'إنشاء عقد زواج منظم ببيانات الأطراف والمهر والشهود.',
+    description:
+      'إنشاء عقد زواج منظم ببيانات الأطراف والمهر والشهود.',
     dbType: 'marriage_contract',
   },
+
   {
     key: 'rental',
     title: 'عقد إيجار',
-    description: 'إنشاء عقد إيجار للعقار أو المنزل أو المحل.',
+    description:
+      'إنشاء عقد إيجار للعقار أو المنزل أو المحل.',
     dbType: 'rental_contract',
   },
+
   {
     key: 'sale',
     title: 'عقد بيع',
-    description: 'إنشاء عقد بيع منظم للمنقولات أو العقارات.',
+    description:
+      'إنشاء عقد بيع منظم للمنقولات أو العقارات.',
     dbType: 'sale_contract',
   },
+
   {
     key: 'power',
     title: 'وكالة',
-    description: 'إنشاء وكالة وتحديد صلاحيات الوكيل.',
+    description:
+      'إنشاء وكالة وتحديد صلاحيات الوكيل.',
     dbType: 'power_of_attorney',
   },
+
   {
     key: 'declaration',
     title: 'إقرار وتعهد',
-    description: 'إنشاء إقرار أو تعهد مكتوب.',
+    description:
+      'إنشاء إقرار أو تعهد مكتوب.',
     dbType: 'declaration',
   },
+
   {
     key: 'company',
     title: 'عقود الشركات',
-    description: 'إنشاء اتفاقية أو عقد منظم بين أطراف الشركة.',
+    description:
+      'إنشاء اتفاقية أو عقد منظم بين أطراف الشركة.',
     dbType: 'agreement',
   },
+
   {
     key: 'other',
     title: 'وثائق أخرى',
-    description: 'إنشاء وثيقة عامة قابلة للتخصيص والطباعة.',
+    description:
+      'إنشاء وثيقة عامة قابلة للتخصيص والطباعة.',
     dbType: 'warning_notice',
   },
 ];
@@ -169,7 +195,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
       key: 'conditions',
       label: 'الشروط الخاصة',
       multiline: true,
-      placeholder: 'اكتب أي شروط إضافية متفق عليها',
+      placeholder:
+        'اكتب أي شروط إضافية متفق عليها',
     },
   ],
 
@@ -198,7 +225,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
       key: 'property',
       label: 'وصف العقار',
       multiline: true,
-      placeholder: 'نوع العقار وموقعه ووصفه',
+      placeholder:
+        'نوع العقار وموقعه ووصفه',
     },
     {
       key: 'rent',
@@ -223,18 +251,21 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'payment_method',
       label: 'طريقة دفع الإيجار',
-      placeholder: 'شهري / سنوي / أخرى',
+      placeholder:
+        'شهري / سنوي / أخرى',
     },
     {
       key: 'conditions',
       label: 'الشروط',
       multiline: true,
-      placeholder: 'الشروط والالتزامات',
+      placeholder:
+        'الشروط والالتزامات',
     },
     {
       key: 'location',
       label: 'مكان تحرير العقد',
-      placeholder: 'المدينة / المنطقة',
+      placeholder:
+        'المدينة / المنطقة',
     },
   ],
 
@@ -263,7 +294,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
       key: 'item',
       label: 'المبيع',
       multiline: true,
-      placeholder: 'وصف الشيء أو العقار المباع',
+      placeholder:
+        'وصف الشيء أو العقار المباع',
     },
     {
       key: 'price',
@@ -273,7 +305,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'payment',
       label: 'طريقة الدفع',
-      placeholder: 'نقدًا / تحويل / أقساط',
+      placeholder:
+        'نقدًا / تحويل / أقساط',
     },
     {
       key: 'date',
@@ -283,13 +316,15 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'location',
       label: 'مكان البيع',
-      placeholder: 'المدينة / المنطقة',
+      placeholder:
+        'المدينة / المنطقة',
     },
     {
       key: 'conditions',
       label: 'الشروط الخاصة',
       multiline: true,
-      placeholder: 'أي شروط إضافية',
+      placeholder:
+        'أي شروط إضافية',
     },
   ],
 
@@ -318,12 +353,14 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
       key: 'scope',
       label: 'نطاق الوكالة',
       multiline: true,
-      placeholder: 'اكتب الصلاحيات الممنوحة للوكيل بالتفصيل',
+      placeholder:
+        'اكتب الصلاحيات الممنوحة للوكيل بالتفصيل',
     },
     {
       key: 'duration',
       label: 'مدة الوكالة',
-      placeholder: 'مثال: حتى تاريخ...',
+      placeholder:
+        'مثال: حتى تاريخ...',
     },
     {
       key: 'date',
@@ -333,7 +370,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'location',
       label: 'مكان تحرير الوكالة',
-      placeholder: 'المدينة / المنطقة',
+      placeholder:
+        'المدينة / المنطقة',
     },
   ],
 
@@ -346,7 +384,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'id',
       label: 'رقم الهوية',
-      placeholder: 'رقم البطاقة الشخصية',
+      placeholder:
+        'رقم البطاقة الشخصية',
     },
     {
       key: 'address',
@@ -356,13 +395,15 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'subject',
       label: 'موضوع الإقرار',
-      placeholder: 'موضوع الإقرار',
+      placeholder:
+        'موضوع الإقرار',
     },
     {
       key: 'content',
       label: 'نص الإقرار والتعهد',
       multiline: true,
-      placeholder: 'اكتب نص الإقرار والتعهد بالتفصيل',
+      placeholder:
+        'اكتب نص الإقرار والتعهد بالتفصيل',
     },
     {
       key: 'date',
@@ -372,7 +413,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'location',
       label: 'مكان الإقرار',
-      placeholder: 'المدينة / المنطقة',
+      placeholder:
+        'المدينة / المنطقة',
     },
   ],
 
@@ -385,55 +427,65 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'company_type',
       label: 'نوع الشركة',
-      placeholder: 'نوع الشركة',
+      placeholder:
+        'نوع الشركة',
     },
     {
       key: 'party1',
       label: 'الطرف الأول',
-      placeholder: 'اسم الطرف الأول',
+      placeholder:
+        'اسم الطرف الأول',
     },
     {
       key: 'party1_id',
       label: 'هوية الطرف الأول',
-      placeholder: 'رقم الهوية',
+      placeholder:
+        'رقم الهوية',
     },
     {
       key: 'party2',
       label: 'الطرف الثاني',
-      placeholder: 'اسم الطرف الثاني',
+      placeholder:
+        'اسم الطرف الثاني',
     },
     {
       key: 'party2_id',
       label: 'هوية الطرف الثاني',
-      placeholder: 'رقم الهوية',
+      placeholder:
+        'رقم الهوية',
     },
     {
       key: 'subject',
       label: 'موضوع العقد',
       multiline: true,
-      placeholder: 'موضوع العقد أو الاتفاقية',
+      placeholder:
+        'موضوع العقد أو الاتفاقية',
     },
     {
       key: 'capital',
       label: 'رأس المال',
-      placeholder: 'قيمة رأس المال',
+      placeholder:
+        'قيمة رأس المال',
     },
     {
       key: 'shares',
       label: 'نسبة الشراكة',
-      placeholder: 'مثال: 50% / 50%',
+      placeholder:
+        'مثال: 50% / 50%',
     },
     {
       key: 'responsibilities',
       label: 'المسؤوليات',
       multiline: true,
-      placeholder: 'مسؤوليات كل طرف',
+      placeholder:
+        'مسؤوليات كل طرف',
     },
     {
       key: 'terms',
       label: 'الشروط',
       multiline: true,
-      placeholder: 'الشروط والأحكام',
+      placeholder:
+        'الشروط والأحكام',
     },
     {
       key: 'date',
@@ -443,7 +495,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'location',
       label: 'مكان العقد',
-      placeholder: 'المدينة / المنطقة',
+      placeholder:
+        'المدينة / المنطقة',
     },
   ],
 
@@ -451,7 +504,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'document_title',
       label: 'عنوان الوثيقة',
-      placeholder: 'مثال: إنذار قانوني',
+      placeholder:
+        'مثال: إنذار قانوني',
     },
     {
       key: 'sender',
@@ -466,13 +520,15 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'subject',
       label: 'الموضوع',
-      placeholder: 'موضوع الوثيقة',
+      placeholder:
+        'موضوع الوثيقة',
     },
     {
       key: 'content',
       label: 'محتوى الوثيقة',
       multiline: true,
-      placeholder: 'اكتب محتوى الوثيقة بالتفصيل',
+      placeholder:
+        'اكتب محتوى الوثيقة بالتفصيل',
     },
     {
       key: 'date',
@@ -482,7 +538,8 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
     {
       key: 'location',
       label: 'المكان',
-      placeholder: 'المدينة / المنطقة',
+      placeholder:
+        'المدينة / المنطقة',
     },
   ],
 };
@@ -496,20 +553,34 @@ const DOC_FIELDS: Record<TemplateKey, Field[]> = {
 const value = (
   data: Record<string, string>,
   key: string
-) => data[key]?.trim() || '................................';
+) => {
+  return data[key]?.trim() || '................................';
+};
 
 const formatDate = (date?: string) => {
   if (!date) return '................';
 
   try {
-    return new Intl.DateTimeFormat('ar-YE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(new Date(date));
+    return new Intl.DateTimeFormat(
+      'ar-YE',
+      {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }
+    ).format(new Date(date));
   } catch {
     return date;
   }
+};
+
+const escapeHtml = (text: string) => {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 };
 
 /*
@@ -855,6 +926,628 @@ ____________________________
 
 /*
 ========================================================
+ إنشاء HTML احترافي للوثيقة
+========================================================
+*/
+
+const buildDocumentHtml = (
+  title: string,
+  generated: string,
+  date?: string
+) => {
+  const safeTitle = escapeHtml(title);
+  const safeGenerated = escapeHtml(generated);
+  const safeDate = escapeHtml(formatDate(date));
+
+  return `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+/>
+
+<title>${safeTitle} - SANAD</title>
+
+<style>
+
+@import url(
+  'https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap'
+);
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #f8f7f4;
+  color: #1f1e1c;
+  font-family:
+    'Tajawal',
+    Tahoma,
+    Arial,
+    sans-serif;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* =========================================
+   Toolbar
+========================================= */
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  flex-wrap: wrap;
+
+  padding: 14px;
+
+  background: rgba(255,255,255,.96);
+
+  border-bottom:
+    1px solid #e6e3de;
+
+  backdrop-filter:
+    blur(14px);
+}
+
+.toolbar button {
+  min-height: 44px;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  padding:
+    10px 18px;
+
+  cursor: pointer;
+
+  font-family:
+    'Tajawal',
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  transition:
+    .2s ease;
+}
+
+.print-button {
+  background: #71806a;
+  color: white;
+}
+
+.print-button:hover {
+  background: #5f6e59;
+}
+
+.close-button {
+  background: #f1efeb;
+  color: #292725;
+}
+
+.close-button:hover {
+  background: #e6e3de;
+}
+
+/* =========================================
+   Page
+========================================= */
+
+.document-wrapper {
+  width: 100%;
+
+  padding:
+    24px 12px 50px;
+}
+
+.document-page {
+  width:
+    min(210mm, 100%);
+
+  min-height:
+    297mm;
+
+  margin:
+    0 auto;
+
+  padding:
+    14mm;
+
+  background:
+    #ffffff;
+
+  border:
+    1px solid #dedad4;
+
+  box-shadow:
+    0 18px 50px
+    rgba(41,39,37,.10);
+}
+
+.document-border {
+  min-height:
+    268mm;
+
+  border:
+    1px solid #77736e;
+
+  padding:
+    10mm;
+}
+
+/* =========================================
+   Header
+========================================= */
+
+.document-header {
+  text-align: center;
+
+  margin-bottom:
+    22px;
+}
+
+.bismillah {
+  font-family:
+    'Tajawal',
+    Tahoma,
+    Arial,
+    sans-serif;
+
+  font-size:
+    17px;
+
+  font-weight:
+    700;
+
+  margin-bottom:
+    10px;
+}
+
+.document-title {
+  margin:
+    0;
+
+  color:
+    #292725;
+
+  font-size:
+    24px;
+
+  line-height:
+    1.6;
+
+  font-weight:
+    900;
+
+  text-decoration:
+    underline;
+
+  text-underline-offset:
+    5px;
+}
+
+/* =========================================
+   Meta
+========================================= */
+
+.document-meta {
+  display:
+    flex;
+
+  justify-content:
+    space-between;
+
+  gap:
+    20px;
+
+  flex-wrap:
+    wrap;
+
+  margin:
+    20px 0;
+
+  padding:
+    10px 0;
+
+  border-top:
+    1px solid #e6e3de;
+
+  border-bottom:
+    1px solid #e6e3de;
+
+  font-size:
+    12px;
+
+  color:
+    #5f5a55;
+}
+
+/* =========================================
+   Content
+========================================= */
+
+.document-content {
+  white-space:
+    pre-line;
+
+  color:
+    #1f1e1c;
+
+  font-size:
+    13px;
+
+  line-height:
+    2.15;
+
+  text-align:
+    justify;
+
+  overflow-wrap:
+    anywhere;
+}
+
+/* =========================================
+   Signatures
+========================================= */
+
+.signatures {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap:
+    30px;
+
+  margin-top:
+    55px;
+
+  text-align:
+    center;
+
+  font-size:
+    12px;
+
+  line-height:
+    1.8;
+}
+
+.signature-box {
+  min-height:
+    75px;
+}
+
+/* =========================================
+   Footer
+========================================= */
+
+.document-footer {
+  margin-top:
+    35px;
+
+  padding-top:
+    10px;
+
+  border-top:
+    1px solid #bdb8b1;
+
+  text-align:
+    center;
+
+  color:
+    #77736e;
+
+  font-size:
+    9px;
+
+  line-height:
+    1.7;
+}
+
+/* =========================================
+   Mobile
+========================================= */
+
+@media (max-width: 600px) {
+
+  .toolbar {
+    padding:
+      10px;
+
+    gap:
+      8px;
+  }
+
+  .toolbar button {
+    flex:
+      1 1 140px;
+
+    min-width:
+      120px;
+
+    padding:
+      10px 12px;
+  }
+
+  .document-wrapper {
+    padding:
+      8px;
+  }
+
+  .document-page {
+    width:
+      100%;
+
+    min-height:
+      auto;
+
+    padding:
+      6mm;
+
+    box-shadow:
+      0 8px 25px
+      rgba(41,39,37,.07);
+  }
+
+  .document-border {
+    min-height:
+      auto;
+
+    padding:
+      6mm;
+  }
+
+  .document-title {
+    font-size:
+      20px;
+  }
+
+  .bismillah {
+    font-size:
+      15px;
+  }
+
+  .document-meta {
+    flex-direction:
+      column;
+
+    gap:
+      8px;
+
+    font-size:
+      11px;
+  }
+
+  .document-content {
+    font-size:
+      12px;
+
+    line-height:
+      1.95;
+  }
+
+  .signatures {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      28px;
+
+    margin-top:
+      40px;
+  }
+}
+
+/* =========================================
+   Print
+========================================= */
+
+@page {
+  size:
+    A4;
+
+  margin:
+    13mm;
+}
+
+@media print {
+
+  html,
+  body {
+    background:
+      white;
+  }
+
+  .toolbar {
+    display:
+      none;
+  }
+
+  .document-wrapper {
+    padding:
+      0;
+  }
+
+  .document-page {
+    width:
+      210mm;
+
+    min-height:
+      297mm;
+
+    margin:
+      0;
+
+    padding:
+      0;
+
+    border:
+      0;
+
+    box-shadow:
+      none;
+  }
+
+  .document-border {
+    min-height:
+      270mm;
+
+    border:
+      1px solid #333;
+
+    padding:
+      10mm;
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="toolbar">
+
+  <button
+    class="print-button"
+    onclick="window.print()"
+  >
+    🖨 طباعة / حفظ PDF
+  </button>
+
+  <button
+    class="close-button"
+    onclick="window.close()"
+  >
+    إغلاق
+  </button>
+
+</div>
+
+<main class="document-wrapper">
+
+  <article class="document-page">
+
+    <div class="document-border">
+
+      <header class="document-header">
+
+        <div class="bismillah">
+          بسم الله الرحمن الرحيم
+        </div>
+
+        <h1 class="document-title">
+          ${safeTitle}
+        </h1>
+
+      </header>
+
+      <div class="document-meta">
+
+        <span>
+          الجمهورية اليمنية
+        </span>
+
+        <span>
+          التاريخ:
+          ${safeDate}
+        </span>
+
+      </div>
+
+      <section class="document-content">
+        ${safeGenerated}
+      </section>
+
+      <section class="signatures">
+
+        <div class="signature-box">
+
+          الطرف الأول
+
+          <br />
+          <br />
+
+          الاسم:
+          __________________
+
+          <br />
+
+          التوقيع:
+          __________________
+
+        </div>
+
+        <div class="signature-box">
+
+          الطرف الثاني
+
+          <br />
+          <br />
+
+          الاسم:
+          __________________
+
+          <br />
+
+          التوقيع:
+          __________________
+
+        </div>
+
+      </section>
+
+      <footer class="document-footer">
+
+        نموذج إعداد وثيقة قانونية عبر منصة SANAD
+
+        <br />
+
+        هذا النموذج مخصص لإعداد الوثيقة
+        ولا يغني عن إجراءات التوثيق والاعتماد
+        لدى الجهة المختصة.
+
+      </footer>
+
+    </div>
+
+  </article>
+
+</main>
+
+</body>
+
+</html>
+`;
+};
+
+/*
+========================================================
  الصفحة
 ========================================================
 */
@@ -872,12 +1565,16 @@ export function DocumentsPage() {
   const [saving, setSaving] =
     useState(false);
 
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user } =
+    useAuth();
+
+  const { toast } =
+    useToast();
 
   const selectedTemplate =
     TEMPLATE_TYPES.find(
-      (item) => item.key === selectedType
+      (item) =>
+        item.key === selectedType
     );
 
   /*
@@ -887,18 +1584,21 @@ export function DocumentsPage() {
   */
 
   const handleGenerate = () => {
-    if (!selectedType) return;
+    if (!selectedType) {
+      return;
+    }
 
     const requiredFields =
       DOC_FIELDS[selectedType];
 
-    const missing = requiredFields
-      .filter(
-        (field) =>
-          !formData[field.key]?.trim() &&
-          field.key !== 'conditions'
-      )
-      .slice(0, 2);
+    const missing =
+      requiredFields
+        .filter(
+          (field) =>
+            !formData[field.key]?.trim() &&
+            field.key !== 'conditions'
+        )
+        .slice(0, 2);
 
     if (missing.length > 0) {
       toast(
@@ -921,7 +1621,9 @@ export function DocumentsPage() {
 
     setTimeout(() => {
       document
-        .getElementById('document-preview')
+        .getElementById(
+          'document-result'
+        )
         ?.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
@@ -931,66 +1633,156 @@ export function DocumentsPage() {
 
   /*
   ======================================================
+  فتح الوثيقة
+  ======================================================
+  */
+
+  const handleOpen = () => {
+    if (!generated || !selectedTemplate) {
+      toast(
+        'أنشئ الوثيقة أولاً',
+        'warning'
+      );
+
+      return;
+    }
+
+    const documentWindow =
+      window.open(
+        '',
+        '_blank',
+        'width=1000,height=900'
+      );
+
+    if (!documentWindow) {
+      toast(
+        'يرجى السماح بفتح النوافذ المنبثقة',
+        'warning'
+      );
+
+      return;
+    }
+
+    documentWindow.document.open();
+
+    documentWindow.document.write(
+      buildDocumentHtml(
+        selectedTemplate.title,
+        generated,
+        formData.date
+      )
+    );
+
+    documentWindow.document.close();
+  };
+
+  /*
+  ======================================================
   الطباعة
   ======================================================
   */
 
   const handlePrint = () => {
-    if (!generated) {
+    if (!generated || !selectedTemplate) {
       toast(
         'أنشئ الوثيقة أولاً',
         'warning'
       );
+
       return;
     }
 
-    window.print();
+    const printWindow =
+      window.open(
+        '',
+        '_blank',
+        'width=1000,height=900'
+      );
+
+    if (!printWindow) {
+      toast(
+        'يرجى السماح بفتح النوافذ المنبثقة',
+        'warning'
+      );
+
+      return;
+    }
+
+    printWindow.document.open();
+
+    printWindow.document.write(
+      buildDocumentHtml(
+        selectedTemplate.title,
+        generated,
+        formData.date
+      )
+    );
+
+    printWindow.document.close();
+
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 350);
+    };
   };
 
   /*
   ======================================================
-  التحميل
+  تحميل HTML
   ======================================================
   */
 
   const handleDownload = () => {
-    if (!generated) {
+    if (!generated || !selectedTemplate) {
       toast(
         'أنشئ الوثيقة أولاً',
         'warning'
       );
+
       return;
     }
 
-    const blob = new Blob(
-      [generated],
-      {
-        type:
-          'text/plain;charset=utf-8',
-      }
-    );
+    const html =
+      buildDocumentHtml(
+        selectedTemplate.title,
+        generated,
+        formData.date
+      );
+
+    const blob =
+      new Blob(
+        [html],
+        {
+          type:
+            'text/html;charset=utf-8',
+        }
+      );
 
     const url =
       URL.createObjectURL(blob);
 
-    const a =
+    const anchor =
       document.createElement('a');
 
-    a.href = url;
+    anchor.href = url;
 
-    a.download =
-      `${selectedTemplate?.title || 'وثيقة'}-SANAD.txt`;
+    anchor.download =
+      `${selectedTemplate.title}-SANAD.html`;
 
-    document.body.appendChild(a);
+    document.body.appendChild(anchor);
 
-    a.click();
+    anchor.click();
 
-    document.body.removeChild(a);
+    document.body.removeChild(anchor);
 
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
 
     toast(
-      'تم تحميل الوثيقة',
+      'تم تحميل الوثيقة بنجاح',
       'success'
     );
   };
@@ -1007,6 +1799,7 @@ export function DocumentsPage() {
         'يجب تسجيل الدخول لحفظ الوثيقة',
         'warning'
       );
+
       return;
     }
 
@@ -1018,6 +1811,7 @@ export function DocumentsPage() {
         'أنشئ الوثيقة أولاً',
         'warning'
       );
+
       return;
     }
 
@@ -1028,13 +1822,20 @@ export function DocumentsPage() {
         await supabase
           .from('documents')
           .insert({
-            user_id: user.id,
+            user_id:
+              user.id,
+
             type:
               selectedTemplate.dbType,
+
             title:
               selectedTemplate.title,
-            content: generated,
-            data: formData,
+
+            content:
+              generated,
+
+            data:
+              formData,
           });
 
       if (error) {
@@ -1068,7 +1869,9 @@ export function DocumentsPage() {
 
   const handleBack = () => {
     setSelectedType(null);
+
     setFormData({});
+
     setGenerated('');
   };
 
@@ -1082,27 +1885,91 @@ export function DocumentsPage() {
     return (
       <div
         dir="rtl"
-        className="container-page section-padding py-12"
+        className="
+          container-page
+          section-padding
+          py-8
+          sm:py-12
+        "
       >
+
+        {/* Header */}
+
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold-50 dark:bg-gold-900/20">
-              <FileText className="w-6 h-6 text-gold-600 dark:text-gold-400" />
+
+          <div
+            className="
+              flex
+              items-start
+              gap-4
+            "
+          >
+
+            <div
+              className="
+                flex
+                h-12
+                w-12
+                shrink-0
+                items-center
+                justify-center
+                rounded-2xl
+                bg-[#EEF1EB]
+                text-[#71806A]
+              "
+            >
+              <FileText
+                className="h-6 w-6"
+              />
             </div>
 
             <div>
-              <h1 className="text-3xl font-bold text-navy-900 dark:text-white">
+
+              <h1
+                className="
+                  text-2xl
+                  font-black
+                  text-[#292725]
+                  dark:text-white
+                  sm:text-3xl
+                "
+              >
                 مولد الوثائق القانونية
               </h1>
 
-              <p className="text-sm text-navy-500 dark:text-navy-400 mt-1">
-                أنشئ وثائق قانونية منظمة وقابلة للطباعة
+              <p
+                className="
+                  mt-2
+                  max-w-2xl
+                  text-sm
+                  leading-6
+                  text-[#77736E]
+                  dark:text-navy-400
+                "
+              >
+                أنشئ وثائق قانونية منظمة
+                وأدخل بياناتك ثم راجعها
+                واطبعها أو احفظها.
               </p>
+
             </div>
+
           </div>
+
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Document cards */}
+
+        <div
+          className="
+            grid
+            grid-cols-1
+            gap-4
+            sm:grid-cols-2
+            lg:grid-cols-3
+          "
+        >
+
           {TEMPLATE_TYPES.map(
             (template) => (
               <button
@@ -1117,42 +1984,146 @@ export function DocumentsPage() {
 
                   setGenerated('');
                 }}
-                className="card p-6 text-right hover:shadow-elevated hover:-translate-y-0.5 transition-all group"
+                className="
+                  group
+                  min-w-0
+                  rounded-2xl
+                  border
+                  border-[#E6E3DE]
+                  bg-white
+                  p-5
+                  text-right
+                  transition-all
+                  duration-200
+                  hover:-translate-y-0.5
+                  hover:border-[#71806A]
+                  hover:shadow-[0_12px_30px_rgba(41,39,37,.08)]
+                  dark:border-navy-800
+                  dark:bg-navy-900
+                "
               >
-                <div className="w-12 h-12 rounded-xl bg-gold-50 dark:bg-gold-900/20 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                  <FileSignature className="w-6 h-6 text-gold-600 dark:text-gold-400" />
+
+                <div
+                  className="
+                    mb-4
+                    flex
+                    h-11
+                    w-11
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-[#F0F2EE]
+                    text-[#71806A]
+                    transition-transform
+                    group-hover:scale-105
+                  "
+                >
+                  <FileSignature
+                    className="h-5 w-5"
+                  />
                 </div>
 
-                <h3 className="font-semibold text-navy-900 dark:text-navy-100 mb-2">
+                <h2
+                  className="
+                    text-base
+                    font-bold
+                    text-[#292725]
+                    dark:text-white
+                  "
+                >
                   {template.title}
-                </h3>
+                </h2>
 
-                <p className="text-sm leading-6 text-navy-500 dark:text-navy-400">
+                <p
+                  className="
+                    mt-2
+                    text-sm
+                    leading-6
+                    text-[#77736E]
+                    dark:text-navy-400
+                  "
+                >
                   {template.description}
                 </p>
 
-                <div className="mt-4 text-xs font-medium text-royal-600 dark:text-royal-400">
-                  إنشاء الوثيقة ←
+                <div
+                  className="
+                    mt-5
+                    flex
+                    items-center
+                    gap-2
+                    text-sm
+                    font-bold
+                    text-[#71806A]
+                  "
+                >
+                  <span>
+                    إنشاء الوثيقة
+                  </span>
+
+                  <ArrowRight
+                    className="
+                      h-4
+                      w-4
+                      rotate-180
+                      transition-transform
+                      group-hover:-translate-x-1
+                    "
+                  />
                 </div>
+
               </button>
             )
           )}
+
         </div>
 
-        <div className="mt-8 card p-5">
-          <div className="flex gap-3">
-            <FileText className="w-5 h-5 text-gold-500 shrink-0 mt-0.5" />
+        {/* Notice */}
 
-            <p className="text-xs leading-6 text-navy-500 dark:text-navy-400">
-              النماذج التي تنشئها منصة SANAD
-              مخصصة لإعداد الوثائق القانونية
-              والطباعة. ولا تصبح وثائق حكومية
-              رسمية إلا بعد استكمال إجراءات
-              الاعتماد والتوثيق لدى الجهة
-              المختصة.
-            </p>
-          </div>
+        <div
+          className="
+            mt-8
+            flex
+            items-start
+            gap-3
+            rounded-2xl
+            border
+            border-[#E6E3DE]
+            bg-white
+            p-4
+            dark:border-navy-800
+            dark:bg-navy-900
+          "
+        >
+
+          <ShieldCheck
+            className="
+              mt-0.5
+              h-5
+              w-5
+              shrink-0
+              text-[#71806A]
+            "
+          />
+
+          <p
+            className="
+              text-xs
+              leading-6
+              text-[#77736E]
+              dark:text-navy-400
+            "
+          >
+            النماذج التي تنشئها منصة SANAD
+            مخصصة لإعداد الوثائق القانونية
+            والطباعة، ولا تصبح وثائق حكومية
+            رسمية إلا بعد استكمال إجراءات
+            الاعتماد والتوثيق لدى الجهة
+            المختصة.
+          </p>
+
         </div>
+
       </div>
     );
   }
@@ -1164,181 +2135,208 @@ export function DocumentsPage() {
   */
 
   return (
-    <>
-      <style>
-        {`
-          @page {
-            size: A4;
-            margin: 0;
-          }
+    <div
+      dir="rtl"
+      className="
+        container-page
+        section-padding
+        w-full
+        max-w-full
+        overflow-x-hidden
+        py-6
+        sm:py-10
+      "
+    >
 
-          @media print {
-            body {
-              margin: 0 !important;
-              padding: 0 !important;
-              background: white !important;
-            }
+      {/* Back */}
 
-            body * {
-              visibility: hidden;
-            }
+      <button
+        type="button"
+        onClick={handleBack}
+        className="
+          mb-5
+          inline-flex
+          min-h-[44px]
+          items-center
+          gap-2
+          rounded-xl
+          px-2
+          text-sm
+          font-medium
+          text-[#77736E]
+          transition-colors
+          hover:text-[#292725]
+          dark:hover:text-white
+        "
+      >
 
-            #document-print-area,
-            #document-print-area * {
-              visibility: visible;
-            }
+        <ArrowRight
+          className="
+            h-4
+            w-4
+          "
+        />
 
-            #document-print-area {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 210mm;
-              min-height: 297mm;
-              margin: 0;
-              padding: 14mm;
-              background: white !important;
-              color: #111 !important;
-              box-shadow: none !important;
-            }
+        العودة إلى أنواع الوثائق
 
-            .document-no-print {
-              display: none !important;
-            }
+      </button>
 
-            .document-paper {
-              box-shadow: none !important;
-              border: 2px solid #111 !important;
-            }
-          }
-
-          .document-paper {
-            width: 210mm;
-            min-height: 297mm;
-            margin: auto;
-            background: #fff;
-            color: #111;
-            box-sizing: border-box;
-            padding: 13mm;
-            border: 2px solid #172033;
-            box-shadow:
-              0 12px 35px rgba(0,0,0,.12);
-            font-family:
-              "Tajawal",
-              "Arial",
-              sans-serif;
-          }
-
-          .document-border {
-            min-height: 268mm;
-            border: 1px solid #777;
-            padding: 10mm;
-            box-sizing: border-box;
-          }
-
-          .document-title {
-            text-align: center;
-            font-size: 22px;
-            font-weight: 800;
-            margin: 7px 0 3px;
-            text-decoration: underline;
-          }
-
-          .document-bismillah {
-            text-align: center;
-            font-size: 16px;
-            font-weight: 700;
-          }
-
-          .document-meta {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-            margin: 18px 0;
-            font-size: 12px;
-          }
-
-          .document-section-title {
-            text-align: center;
-            font-weight: 800;
-            font-size: 14px;
-            text-decoration: underline;
-            margin: 17px 0 8px;
-          }
-
-          .document-text {
-            font-size: 12px;
-            line-height: 2;
-            text-align: justify;
-            white-space: pre-line;
-          }
-
-          .document-line {
-            border-bottom: 1px dotted #555;
-            min-height: 25px;
-          }
-
-          .document-signatures {
-            display: grid;
-            grid-template-columns:
-              repeat(2, 1fr);
-            gap: 25px;
-            margin-top: 35px;
-            text-align: center;
-            font-size: 12px;
-          }
-
-          .document-signature {
-            min-height: 55px;
-          }
-
-          .document-footer {
-            margin-top: 25px;
-            padding-top: 8px;
-            border-top: 1px solid #888;
-            text-align: center;
-            font-size: 9px;
-            color: #555;
-          }
-        `}
-      </style>
+      {/* Header */}
 
       <div
-        dir="rtl"
-        className="container-page section-padding py-10"
+        className="
+          mb-6
+          min-w-0
+        "
       >
-        <div className="document-no-print">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="text-sm text-navy-500 hover:text-navy-900 dark:hover:text-white mb-6 transition-colors"
+
+        <div
+          className="
+            flex
+            flex-wrap
+            items-center
+            gap-3
+          "
+        >
+
+          <h1
+            className="
+              min-w-0
+              text-2xl
+              font-black
+              text-[#292725]
+              dark:text-white
+              sm:text-3xl
+            "
           >
-            ← العودة إلى أنواع الوثائق
-          </button>
+            {selectedTemplate?.title}
+          </h1>
 
-          <div className="mb-7">
-            <h1 className="text-3xl font-bold text-navy-900 dark:text-white">
-              {selectedTemplate?.title}
-            </h1>
+          <Badge variant="success">
+            جاهز للإنشاء
+          </Badge>
 
-            <p className="mt-2 text-sm text-navy-500 dark:text-navy-400">
-              أدخل البيانات ثم أنشئ الوثيقة
-            </p>
-          </div>
+        </div>
 
-          <div className="grid lg:grid-cols-2 gap-8">
-            <div className="card p-6">
-              <h2 className="text-lg font-bold text-navy-900 dark:text-white mb-5">
+        <p
+          className="
+            mt-2
+            text-sm
+            text-[#77736E]
+            dark:text-navy-400
+          "
+        >
+          أدخل البيانات المطلوبة ثم أنشئ
+          الوثيقة لمراجعتها أو طباعتها.
+        </p>
+
+      </div>
+
+      {/* Main editor */}
+
+      <div
+        className="
+          grid
+          min-w-0
+          grid-cols-1
+          gap-6
+          lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,.85fr)]
+        "
+      >
+
+        {/* Form */}
+
+        <section
+          className="
+            min-w-0
+            rounded-2xl
+            border
+            border-[#E6E3DE]
+            bg-white
+            p-4
+            shadow-sm
+            sm:p-6
+            dark:border-navy-800
+            dark:bg-navy-900
+          "
+        >
+
+          <div
+            className="
+              mb-5
+              flex
+              items-center
+              gap-3
+            "
+          >
+
+            <div
+              className="
+                flex
+                h-10
+                w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-xl
+                bg-[#EEF1EB]
+                text-[#71806A]
+              "
+            >
+              <FileSignature
+                className="h-5 w-5"
+              />
+            </div>
+
+            <div>
+
+              <h2
+                className="
+                  text-base
+                  font-bold
+                  text-[#292725]
+                  dark:text-white
+                "
+              >
                 بيانات الوثيقة
               </h2>
 
-              <div className="space-y-4">
-                {DOC_FIELDS[
-                  selectedType
-                ].map((field) => {
-                  if (field.multiline) {
-                    return (
+              <p
+                className="
+                  mt-1
+                  text-xs
+                  text-[#77736E]
+                  dark:text-navy-400
+                "
+              >
+                املأ البيانات المطلوبة بدقة
+              </p>
+
+            </div>
+
+          </div>
+
+          <div
+            className="
+              grid
+              min-w-0
+              grid-cols-1
+              gap-4
+              sm:grid-cols-2
+            "
+          >
+
+            {DOC_FIELDS[selectedType].map(
+              (field) => {
+
+                if (field.multiline) {
+                  return (
+                    <div
+                      key={field.key}
+                      className="min-w-0 sm:col-span-2"
+                    >
+
                       <Textarea
-                        key={field.key}
                         label={field.label}
                         value={
                           formData[
@@ -1356,12 +2354,18 @@ export function DocumentsPage() {
                           })
                         }
                       />
-                    );
-                  }
 
-                  return (
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={field.key}
+                    className="min-w-0"
+                  >
+
                     <Input
-                      key={field.key}
                       label={field.label}
                       type={
                         field.type ||
@@ -1383,170 +2387,557 @@ export function DocumentsPage() {
                         })
                       }
                     />
-                  );
-                })}
-              </div>
 
-              <div className="mt-6">
-                <Button
-                  onClick={
-                    handleGenerate
-                  }
-                  className="w-full"
-                >
-                  <FileSignature className="w-4 h-4" />
-                  إنشاء الوثيقة
-                </Button>
-              </div>
-            </div>
+                  </div>
+                );
+              }
+            )}
+
+          </div>
+
+          {/* Generate */}
+
+          <div className="mt-6">
+
+            <Button
+              onClick={handleGenerate}
+              className="
+                w-full
+                !bg-[#71806A]
+                hover:!bg-[#5F6E59]
+              "
+            >
+
+              <FileSignature
+                className="h-4 w-4"
+              />
+
+              إنشاء الوثيقة
+
+            </Button>
+
+          </div>
+
+        </section>
+
+        {/* Result panel */}
+
+        <section
+          id="document-result"
+          className="
+            min-w-0
+            self-start
+            rounded-2xl
+            border
+            border-[#E6E3DE]
+            bg-white
+            shadow-sm
+            dark:border-navy-800
+            dark:bg-navy-900
+          "
+        >
+
+          {/* Result header */}
+
+          <div
+            className="
+              border-b
+              border-[#E6E3DE]
+              p-4
+              sm:p-5
+              dark:border-navy-800
+            "
+          >
 
             <div
-              className="document-no-print"
-              style={{
-                alignSelf: 'start',
-              }}
+              className="
+                flex
+                min-w-0
+                items-center
+                gap-3
+              "
             >
-              <div className="card p-5">
-                <div className="flex items-center justify-between gap-3 mb-5">
-                  <div>
-                    <h2 className="font-bold text-navy-900 dark:text-white">
-                      معاينة الوثيقة
-                    </h2>
 
-                    <p className="text-xs text-navy-500 mt-1">
-                      ستظهر هنا بصيغة A4
-                    </p>
-                  </div>
+              <div
+                className="
+                  flex
+                  h-11
+                  w-11
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-[#F0F2EE]
+                  text-[#71806A]
+                "
+              >
+                <FileText
+                  className="h-5 w-5"
+                />
+              </div>
 
-                  {generated && (
-                    <Badge variant="success">
-                      جاهزة
-                    </Badge>
-                  )}
+              <div className="min-w-0">
+
+                <h2
+                  className="
+                    truncate
+                    text-base
+                    font-bold
+                    text-[#292725]
+                    dark:text-white
+                  "
+                >
+                  نتيجة الوثيقة
+                </h2>
+
+                <p
+                  className="
+                    mt-1
+                    text-xs
+                    text-[#77736E]
+                    dark:text-navy-400
+                  "
+                >
+                  {generated
+                    ? 'الوثيقة جاهزة للتعامل معها'
+                    : 'ستظهر النتيجة بعد الإنشاء'}
+                </p>
+
+              </div>
+
+              {generated && (
+                <span
+                  className="
+                    mr-auto
+                    inline-flex
+                    shrink-0
+                    items-center
+                    gap-1
+                    rounded-full
+                    bg-[#EEF1EB]
+                    px-3
+                    py-1
+                    text-xs
+                    font-bold
+                    text-[#5F6E59]
+                  "
+                >
+
+                  <CheckCircle
+                    className="h-3.5 w-3.5"
+                  />
+
+                  جاهزة
+
+                </span>
+              )}
+
+            </div>
+
+          </div>
+
+          {!generated ? (
+
+            /* Empty result */
+
+            <div
+              className="
+                flex
+                min-h-[280px]
+                items-center
+                justify-center
+                p-6
+                text-center
+              "
+            >
+
+              <div>
+
+                <div
+                  className="
+                    mx-auto
+                    mb-4
+                    flex
+                    h-16
+                    w-16
+                    items-center
+                    justify-center
+                    rounded-2xl
+                    bg-[#F8F7F4]
+                    text-[#9A958E]
+                  "
+                >
+
+                  <FileText
+                    className="h-7 w-7"
+                  />
+
                 </div>
 
-                {!generated ? (
-                  <div className="min-h-[350px] flex items-center justify-center text-center">
-                    <div>
-                      <FileText className="w-14 h-14 mx-auto text-navy-200 dark:text-navy-700 mb-4" />
+                <h3
+                  className="
+                    text-sm
+                    font-bold
+                    text-[#292725]
+                    dark:text-white
+                  "
+                >
+                  لم يتم إنشاء الوثيقة بعد
+                </h3>
 
-                      <p className="text-sm text-navy-400">
-                        أدخل البيانات واضغط
-                        «إنشاء الوثيقة»
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Button
-                      onClick={
-                        handlePrint
-                      }
-                      className="w-full"
-                    >
-                      <Download className="w-4 h-4" />
-                      طباعة / حفظ PDF
-                    </Button>
+                <p
+                  className="
+                    mx-auto
+                    mt-2
+                    max-w-xs
+                    text-xs
+                    leading-6
+                    text-[#77736E]
+                    dark:text-navy-400
+                  "
+                >
+                  أدخل البيانات المطلوبة
+                  ثم اضغط على «إنشاء الوثيقة»
+                  وستظهر لك خيارات الوثيقة هنا.
+                </p>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant="secondary"
-                        onClick={
-                          handleDownload
-                        }
-                      >
-                        <Download className="w-4 h-4" />
-                        تحميل TXT
-                      </Button>
-
-                      <Button
-                        variant="gold"
-                        onClick={
-                          handleSave
-                        }
-                        loading={saving}
-                      >
-                        <Save className="w-4 h-4" />
-                        حفظ
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
+
             </div>
+
+          ) : (
+
+            /* Generated */
+
+            <div className="p-4 sm:p-5">
+
+              {/* Small document summary */}
+
+              <div
+                className="
+                  rounded-xl
+                  bg-[#F8F7F4]
+                  p-4
+                "
+              >
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-3
+                  "
+                >
+
+                  <div
+                    className="
+                      flex
+                      h-10
+                      w-10
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-lg
+                      bg-white
+                      text-[#71806A]
+                    "
+                  >
+
+                    <FileSignature
+                      className="h-5 w-5"
+                    />
+
+                  </div>
+
+                  <div className="min-w-0">
+
+                    <p
+                      className="
+                        truncate
+                        text-sm
+                        font-bold
+                        text-[#292725]
+                      "
+                    >
+                      {selectedTemplate?.title}
+                    </p>
+
+                    <p
+                      className="
+                        mt-1
+                        text-xs
+                        text-[#77736E]
+                      "
+                    >
+                      صيغة قانونية قابلة للطباعة
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Actions */}
+
+              <div
+                className="
+                  mt-4
+                  grid
+                  grid-cols-2
+                  gap-2
+                "
+              >
+
+                {/* Open */}
+
+                <button
+                  type="button"
+                  onClick={handleOpen}
+                  className="
+                    flex
+                    min-h-[48px]
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-xl
+                    border
+                    border-[#E0DDD7]
+                    bg-white
+                    px-3
+                    text-sm
+                    font-bold
+                    text-[#292725]
+                    transition
+                    hover:border-[#71806A]
+                    hover:bg-[#F8F7F4]
+                  "
+                >
+
+                  <FileText
+                    className="h-4 w-4 text-[#71806A]"
+                  />
+
+                  فتح
+
+                </button>
+
+                {/* Download */}
+
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="
+                    flex
+                    min-h-[48px]
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-xl
+                    bg-[#292725]
+                    px-3
+                    text-sm
+                    font-bold
+                    text-white
+                    transition
+                    hover:bg-[#3A3835]
+                  "
+                >
+
+                  <Download
+                    className="h-4 w-4"
+                  />
+
+                  تحميل
+
+                </button>
+
+                {/* Print */}
+
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="
+                    flex
+                    min-h-[48px]
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-xl
+                    bg-[#71806A]
+                    px-3
+                    text-sm
+                    font-bold
+                    text-white
+                    transition
+                    hover:bg-[#5F6E59]
+                  "
+                >
+
+                  <Printer
+                    className="h-4 w-4"
+                  />
+
+                  طباعة
+
+                </button>
+
+                {/* Save */}
+
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="
+                    flex
+                    min-h-[48px]
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-xl
+                    border
+                    border-[#DCC99F]
+                    bg-[#F8F0DF]
+                    px-3
+                    text-sm
+                    font-bold
+                    text-[#6A532B]
+                    transition
+                    hover:bg-[#F2E7CF]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
+                >
+
+                  <Save
+                    className="h-4 w-4"
+                  />
+
+                  {saving
+                    ? 'جاري الحفظ...'
+                    : 'حفظ'}
+
+                </button>
+
+              </div>
+
+              {/* Help */}
+
+              <div
+                className="
+                  mt-4
+                  flex
+                  items-start
+                  gap-2
+                  rounded-xl
+                  border
+                  border-[#E6E3DE]
+                  bg-white
+                  p-3
+                "
+              >
+
+                <ShieldCheck
+                  className="
+                    mt-0.5
+                    h-4
+                    w-4
+                    shrink-0
+                    text-[#71806A]
+                  "
+                />
+
+                <p
+                  className="
+                    text-xs
+                    leading-6
+                    text-[#77736E]
+                  "
+                >
+                  يمكنك فتح الوثيقة لمراجعتها،
+                  أو تحميل نسخة HTML، أو طباعتها
+                  مباشرة وحفظها كملف PDF من نافذة
+                  الطباعة.
+                </p>
+
+              </div>
+
+            </div>
+
+          )}
+
+        </section>
+
+      </div>
+
+      {/* Legal note */}
+
+      <div
+        className="
+          mt-6
+          rounded-2xl
+          border
+          border-[#E6E3DE]
+          bg-[#FCFBF9]
+          p-4
+          dark:border-navy-800
+          dark:bg-navy-900
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-start
+            gap-3
+          "
+        >
+
+          <ShieldCheck
+            className="
+              mt-0.5
+              h-5
+              w-5
+              shrink-0
+              text-[#71806A]
+            "
+          />
+
+          <div>
+
+            <p
+              className="
+                text-sm
+                font-bold
+                text-[#292725]
+                dark:text-white
+              "
+            >
+              تنبيه قانوني
+            </p>
+
+            <p
+              className="
+                mt-1
+                text-xs
+                leading-6
+                text-[#77736E]
+                dark:text-navy-400
+              "
+            >
+              الوثيقة الناتجة هي نموذج لإعداد
+              المحتوى القانوني. يجب مراجعة
+              الوثيقة والتأكد من البيانات واستكمال
+              إجراءات التوثيق والاعتماد لدى الجهة
+              المختصة عند الحاجة.
+            </p>
+
           </div>
+
         </div>
 
-        {generated && (
-          <div
-            id="document-preview"
-            className="mt-10"
-          >
-            <div
-              id="document-print-area"
-              className="document-paper"
-              dir="rtl"
-            >
-              <div className="document-border">
-                <div className="document-bismillah">
-                  بسم الله الرحمن الرحيم
-                </div>
-
-                <div className="document-title">
-                  {selectedTemplate?.title}
-                </div>
-
-                <div className="document-meta">
-                  <span>
-                    المملكة / الجمهورية اليمنية
-                  </span>
-
-                  <span>
-                    التاريخ:
-                    {' '}
-                    {formatDate(
-                      formData.date
-                    )}
-                  </span>
-                </div>
-
-                <div className="document-text">
-                  {generated}
-                </div>
-
-                <div className="document-signatures">
-                  <div className="document-signature">
-                    الطرف الأول
-                    <br />
-                    <br />
-                    الاسم: ......................
-                    <br />
-                    التوقيع:
-                    __________________
-                  </div>
-
-                  <div className="document-signature">
-                    الطرف الثاني
-                    <br />
-                    <br />
-                    الاسم: ......................
-                    <br />
-                    التوقيع:
-                    __________________
-                  </div>
-                </div>
-
-                <div className="document-footer">
-                  نموذج إعداد وثيقة قانونية عبر منصة SANAD
-                  <br />
-                  هذا النموذج لا يغني عن إجراءات التوثيق
-                  والاعتماد لدى الجهة المختصة.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-    </>
+
+    </div>
   );
 }
