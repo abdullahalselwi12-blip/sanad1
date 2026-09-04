@@ -1,0 +1,14 @@
+[functions.ai-assistant]
+verify_jwt = false
+
+[functions.laws-api]
+verify_jwt = false
+
+[functions.lawyers-api]
+verify_jwt = false
+
+[functions.consultations-api]
+verify_jwt = false
+
+[functions.auth-api]
+verify_jwt = false

@@ -61,6 +61,7 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json();
     const question = body?.question;
+    const history: Array<{ role: string; content: string }> = Array.isArray(body?.history) ? body.history : [];
 
     if (!question || typeof question !== "string" || question.trim().length === 0) {
       log("ERROR", "Missing or invalid question");
@@ -68,6 +69,7 @@ Deno.serve(async (req: Request) => {
     }
 
     log("Incoming question", question);
+    log("History messages count", String(history.length));
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -133,47 +135,64 @@ Deno.serve(async (req: Request) => {
 
     log("Law context length", `${lawContext.length} chars`);
 
-    const apiKey = Deno.env.get("AI_API_KEY");
+    const apiKey = Deno.env.get("AGENTROUTER_API_KEY");
 
     // If no API key is configured, use local fallback
     if (!apiKey || apiKey.trim().length === 0) {
-      log("INFO", "No AI_API_KEY configured — using local fallback");
+      log("INFO", "No AGENTROUTER_API_KEY configured — using local fallback");
       const { answer, lawTitle } = buildLocalAnswer(articles);
       log("Execution time", `${Date.now() - startTime}ms`);
       return jsonResponse({ answer, articles, lawTitle });
     }
 
     // Build strict system prompt — no hallucination allowed
-    const systemPrompt = `أنت SANAD AI Legal Assistant — مساعد قانوني يمني ذكي.
-تجيب على أسئلة المستخدمين باللغة العربية فقط.
+    const systemPrompt = `أنت SANAD AI Legal Assistant — المساعد القانوني الذكي لمنصة SANAD القانونية اليمنية.
+تجيب على أسئلة المستخدمين باللغة العربية.
 
 قواعد صارمة:
 1. تجيب فقط بناءً على المواد القانونية الموجودة في قاعدة بيانات SANAD.
 2. لا تستخدم معرفتك العامة أبداً. لا تختلق قوانين أو مواد غير موجودة.
-3. اذكر دائماً رقم المادة والمصدر عند الاقتباس.
+3. اذكر دائماً رقم المادة واسم القانون عند الاقتباس.
 4. إذا لم توجد مواد قانونية مطابقة في قاعدة البيانات، قل بوضوح: "لم أجد مرجعاً قانونياً في قاعدة بيانات SANAD."
 5. لا تخمن ولا تستنتج من معلومات خارجية.
 6. أضف في نهاية إجابتك: "هذه المعلومات للأغراض التثقيفية ولا تغني عن استشارة محامٍ مختص."
+
+خصائص المحادثة:
+- تفهم العربية الفصحى والعامية واللهجات المختلفة.
+- تتحمل الأخطاء الإملائية وتفهم المقصود من السؤال.
+- تجري محادثة طبيعية وتفهم سياق الأسئلة السابقة.
+- إذا قال المستخدم "السلام عليكم" أو "اسلام عليكم" أو أي تحية مشابهة، رد بـ: "وعليكم السلام ورحمة الله وبركاته" ثم اسأله كيف يمكنك مساعدته قانونياً.
+- كن مهذباً وواضحاً ومباشراً في إجاباتك.
 
 ${lawContext ? `المواد القانونية ذات الصلة من قاعدة بيانات SANAD:\n\n${lawContext}` : "لا توجد مواد قانونية مطابقة في قاعدة بيانات SANAD لهذا السؤال."}`;
 
     log("Prompt length", `${systemPrompt.length} chars`);
     log("INFO", "Calling AI provider...");
 
+    // Build conversation messages — system prompt + history + current question
+    const conversationMessages: Array<{ role: string; content: string }> = [
+      { role: "system", content: systemPrompt },
+    ];
+
+    for (const msg of history) {
+      if (msg && (msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string") {
+        conversationMessages.push({ role: msg.role, content: msg.content });
+      }
+    }
+
+    conversationMessages.push({ role: "user", content: question });
+
     let aiResponse: Response;
     try {
-      aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      aiResponse = await fetch("https://co.agentrouter.org/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: question },
-          ],
+          model: "gpt-5.5",
+          messages: conversationMessages,
           temperature: 0.3,
           max_tokens: 1000,
         }),

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Spinner, EmptyState } from '@/components/ui/Spinner';
 import { Avatar } from '@/components/ui/Avatar';
 import { supabase } from '@/lib/supabase';
+import { fetchConsultations, createConsultation } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { CONSULTATION_STATUSES } from '@/constants';
@@ -24,15 +25,26 @@ export function ConsultationsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const [{ data: lawyerData }, { data: consultData }] = await Promise.all([
+      const [lawyerResult, consultResult] = await Promise.allSettled([
         supabase.from('lawyers').select('*, profile:profiles(*)').eq('is_verified', true),
-        user ? supabase.from('consultations').select('*, profile:profiles(*), lawyer:lawyers(*)').eq('user_id', user.id).order('created_at', { ascending: false }) : Promise.resolve({ data: null }),
+        user ? fetchConsultations({ limit: 100 }) : Promise.resolve({ data: [] as Consultation[], pagination: { page: 1, limit: 100, total: 0, total_pages: 0, has_next: false, has_prev: false } }),
       ]);
-      setLawyers((lawyerData || []) as Lawyer[]);
-      setConsultations((consultData || []) as Consultation[]);
-      setLoading(false);
+
+      if (!cancelled) {
+        if (lawyerResult.status === 'fulfilled') {
+          setLawyers((lawyerResult.value.data || []) as Lawyer[]);
+        }
+        if (consultResult.status === 'fulfilled') {
+          setConsultations(consultResult.value.data);
+        } else if (user) {
+          setConsultations([]);
+        }
+        setLoading(false);
+      }
     })();
+    return () => { cancelled = true; };
   }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,23 +54,22 @@ export function ConsultationsPage() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from('consultations').insert({
-      user_id: user.id,
-      subject,
-      question,
-      lawyer_id: lawyerId || null,
-    });
-    setSubmitting(false);
-    if (error) {
+    try {
+      await createConsultation({
+        subject,
+        question,
+        lawyer_id: lawyerId || undefined,
+      });
+      toast('تم إرسال استشارتك بنجاح', 'success');
+      setSubject('');
+      setQuestion('');
+      setLawyerId('');
+      const result = await fetchConsultations({ limit: 100 });
+      setConsultations(result.data);
+    } catch {
       toast('حدث خطأ أثناء إرسال الاستشارة', 'error');
-      return;
     }
-    toast('تم إرسال استشارتك بنجاح', 'success');
-    setSubject('');
-    setQuestion('');
-    setLawyerId('');
-    const { data } = await supabase.from('consultations').select('*, profile:profiles(*), lawyer:lawyers(*)').eq('user_id', user.id).order('created_at', { ascending: false });
-    setConsultations((data || []) as Consultation[]);
+    setSubmitting(false);
   };
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;

@@ -10,7 +10,7 @@ import {
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner, EmptyState } from '@/components/ui/Spinner';
-import { supabase } from '@/lib/supabase';
+import { fetchLaws } from '@/lib/api';
 import { LAW_CATEGORIES } from '@/constants';
 import { formatDate } from '@/utils';
 
@@ -198,37 +198,35 @@ export function LawsPage() {
    */
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       setLoading(true);
 
-      let query = supabase
-        .from('laws')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', {
-          ascending: false,
+      try {
+        const result = await fetchLaws({
+          search,
+          category,
+          limit: 100,
         });
 
-      if (category !== 'all') {
-        query = query.eq('category', category);
+        if (!cancelled) {
+          setLaws(result.data);
+        }
+      } catch {
+        if (!cancelled) {
+          setLaws([]);
+        }
       }
 
-      if (search) {
-        query = query.or(
-          `title.ilike.%${search}%,description.ilike.%${search}%`
-        );
+      if (!cancelled) {
+        setLoading(false);
       }
-
-      const { data, error } = await query;
-
-      if (!error && data) {
-        setLaws(data as Law[]);
-      } else {
-        setLaws([]);
-      }
-
-      setLoading(false);
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [search, category]);
 
   return (
