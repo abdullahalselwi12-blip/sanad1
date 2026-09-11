@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search,
@@ -10,7 +10,9 @@ import {
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner, EmptyState } from '@/components/ui/Spinner';
-import { fetchLaws } from '@/lib/api';
+
+import { SearchStrategyFactory } from '@/patterns/strategy/SearchStrategyFactory';
+
 import { LAW_CATEGORIES } from '@/constants';
 import { formatDate } from '@/utils';
 
@@ -76,6 +78,23 @@ export function LawsPage() {
 
   /*
    * ============================================================
+   * Strategy Pattern
+   * ============================================================
+   *
+   * نستخدم Hybrid Search حتى يجمع:
+   * 1. البحث بالكلمات
+   * 2. البحث الدلالي
+   *
+   * ويتم إنشاء الـ Strategy مرة واحدة فقط.
+   */
+
+  const searchStrategy = useMemo(
+    () => SearchStrategyFactory.create('hybrid'),
+    []
+  );
+
+  /*
+   * ============================================================
    * SEO
    * ============================================================
    */
@@ -92,7 +111,11 @@ export function LawsPage() {
     document.documentElement.lang = 'ar';
     document.documentElement.dir = 'rtl';
 
-    setMetaTag('name', 'description', description);
+    setMetaTag(
+      'name',
+      'description',
+      description
+    );
 
     setMetaTag(
       'name',
@@ -169,11 +192,13 @@ export function LawsPage() {
       description,
       url: `${SITE_URL}/laws`,
       inLanguage: 'ar-YE',
+
       isPartOf: {
         '@type': 'WebSite',
         name: 'SANAD',
         url: SITE_URL,
       },
+
       about: {
         '@type': 'Thing',
         name: 'القوانين اليمنية',
@@ -204,14 +229,14 @@ export function LawsPage() {
       setLoading(true);
 
       try {
-        const result = await fetchLaws({
+        const result = await searchStrategy.search({
           search,
           category,
           limit: 100,
         });
 
         if (!cancelled) {
-          setLaws(result.data);
+          setLaws(result);
         }
       } catch {
         if (!cancelled) {
@@ -227,7 +252,7 @@ export function LawsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search, category]);
+  }, [search, category, searchStrategy]);
 
   return (
     <main

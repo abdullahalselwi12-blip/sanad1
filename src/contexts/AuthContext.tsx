@@ -45,9 +45,15 @@ interface AuthContextValue {
   refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined
+);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [user, setUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -116,25 +122,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      */
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!mounted) return;
 
-      (async () => {
-        if (session) {
-          const profile = await fetchProfile(session.user.id);
+        (async () => {
+          if (session) {
+            const profile = await fetchProfile(
+              session.user.id
+            );
+
+            if (mounted) {
+              setUser(profile);
+            }
+          } else {
+            setUser(null);
+          }
 
           if (mounted) {
-            setUser(profile);
+            setLoading(false);
           }
-        } else {
-          setUser(null);
-        }
-
-        if (mounted) {
-          setLoading(false);
-        }
-      })();
-    });
+        })();
+      }
+    );
 
     return () => {
       mounted = false;
@@ -147,7 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const signIn = useCallback(
     async (email: string, password: string) => {
-      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedEmail =
+        email.trim().toLowerCase();
 
       if (!normalizedEmail) {
         return {
@@ -210,8 +221,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fullName: string,
       role: UserRole
     ) => {
-      const normalizedEmail = email.trim().toLowerCase();
-      const normalizedName = fullName.trim();
+      const normalizedEmail =
+        email.trim().toLowerCase();
+
+      const normalizedName =
+        fullName.trim();
 
       if (!normalizedEmail) {
         return {
@@ -236,32 +250,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (password.length < 6) {
         return {
-          error: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+          error:
+            'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
           profile: null,
         };
       }
 
       /**
        * Security:
-       * Admin accounts must never be created from the public registration form.
+       * Admin accounts must never be created from
+       * the public registration form.
        */
-      if (role !== 'user' && role !== 'lawyer') {
+      if (
+        role !== 'user' &&
+        role !== 'lawyer'
+      ) {
         return {
           error: 'نوع الحساب غير مسموح به',
           profile: null,
         };
       }
 
-      const { data, error } = await supabase.auth.signUp({
-        email: normalizedEmail,
-        password,
-        options: {
-          data: {
-            full_name: normalizedName,
-            role,
+      const { data, error } =
+        await supabase.auth.signUp({
+          email: normalizedEmail,
+          password,
+          options: {
+            data: {
+              full_name: normalizedName,
+              role,
+            },
           },
-        },
-      });
+        });
 
       if (error) {
         return {
@@ -277,15 +297,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          * Only safe public roles are allowed here.
          * Admin is rejected above.
          */
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: normalizedEmail,
-            full_name: normalizedName,
-            role,
-            is_active: true,
-          });
+        const { error: profileError } =
+          await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: normalizedEmail,
+              full_name: normalizedName,
+              role,
+              is_active: true,
+            });
 
         if (profileError) {
           return {
@@ -294,7 +315,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        profile = await fetchProfile(data.user.id);
+        profile = await fetchProfile(
+          data.user.id
+        );
 
         if (profile) {
           setUser(profile);
@@ -337,37 +360,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       /**
        * Build a safe update object.
-       * Only fields that a normal user should be able to edit
-       * are accepted.
+       * Only fields that a normal user should be able
+       * to edit are accepted.
        */
       const safeUpdates: Partial<Profile> = {};
 
-      if (typeof updates.full_name === 'string') {
-        const fullName = updates.full_name.trim();
+      if (
+        typeof updates.full_name === 'string'
+      ) {
+        const fullName =
+          updates.full_name.trim();
 
         if (fullName.length > 0) {
           safeUpdates.full_name = fullName;
         }
       }
 
-      if (typeof updates.phone === 'string') {
-        safeUpdates.phone = updates.phone.trim();
+      if (
+        typeof updates.phone === 'string'
+      ) {
+        safeUpdates.phone =
+          updates.phone.trim();
       }
 
-      if (typeof updates.avatar_url === 'string') {
-        safeUpdates.avatar_url = updates.avatar_url.trim();
+      if (
+        typeof updates.avatar_url === 'string'
+      ) {
+        safeUpdates.avatar_url =
+          updates.avatar_url.trim();
       }
 
-      if (typeof updates.bio === 'string') {
-        safeUpdates.bio = updates.bio.trim();
-      }
+      /**
+       * bio was removed because it is not part
+       * of the Profile type.
+       */
 
       /**
        * Prevent empty update requests.
        */
-      if (Object.keys(safeUpdates).length === 0) {
+      if (
+        Object.keys(safeUpdates).length === 0
+      ) {
         return {
-          error: 'لا توجد بيانات صالحة للتحديث',
+          error:
+            'لا توجد بيانات صالحة للتحديث',
         };
       }
 
@@ -397,17 +433,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Refresh current user's profile.
    */
-  const refreshUser = useCallback(async () => {
-    if (!user) {
-      return;
-    }
+  const refreshUser = useCallback(
+    async () => {
+      if (!user) {
+        return;
+      }
 
-    const profile = await fetchProfile(user.id);
+      const profile =
+        await fetchProfile(user.id);
 
-    if (profile) {
-      setUser(profile);
-    }
-  }, [user, fetchProfile]);
+      if (profile) {
+        setUser(profile);
+      }
+    },
+    [user, fetchProfile]
+  );
 
   return (
     <AuthContext.Provider

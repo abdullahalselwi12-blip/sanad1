@@ -259,7 +259,6 @@ export default function App() {
         <ToastProvider>
           <BrowserRouter>
             <Suspense fallback={<PageLoader />}>
-
               <Routes>
 
                 {/* ==================================================
@@ -537,7 +536,6 @@ export default function App() {
                 </Route>
 
               </Routes>
-
             </Suspense>
           </BrowserRouter>
         </ToastProvider>
