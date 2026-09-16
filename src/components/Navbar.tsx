@@ -50,6 +50,11 @@ export function Navbar() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
+  // إظهار روابط النظام فقط للمستخدم المسجل دخوله
+  const visibleNavLinks = user
+    ? NAV_LINKS
+    : NAV_LINKS.filter((link) => link.path === '/');
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -102,7 +107,7 @@ export function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-1">
-          {NAV_LINKS.map((link) => {
+          {visibleNavLinks.map((link) => {
             const Icon = ICON_MAP[link.path] || FileText;
             const isActive = location.pathname === link.path;
 
@@ -280,6 +285,7 @@ export function Navbar() {
                         className="w-4 h-4"
                         aria-hidden="true"
                       />
+
                       <span>لوحة التحكم</span>
                     </Link>
 
@@ -303,6 +309,7 @@ export function Navbar() {
                         className="w-4 h-4"
                         aria-hidden="true"
                       />
+
                       <span>الإعدادات</span>
                     </Link>
 
@@ -330,6 +337,7 @@ export function Navbar() {
                         className="w-4 h-4"
                         aria-hidden="true"
                       />
+
                       <span>تسجيل الخروج</span>
                     </button>
                   </div>
@@ -357,7 +365,7 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu Button */}
           <button
             type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -387,6 +395,7 @@ export function Navbar() {
               <Menu className="w-5 h-5" aria-hidden="true" />
             )}
           </button>
+
         </div>
       </nav>
 
@@ -403,7 +412,7 @@ export function Navbar() {
         >
           <div className="container-page section-padding py-4 space-y-1">
 
-            {NAV_LINKS.map((link) => {
+            {visibleNavLinks.map((link) => {
               const Icon = ICON_MAP[link.path] || FileText;
               const isActive = location.pathname === link.path;
 
@@ -449,6 +458,7 @@ export function Navbar() {
                     className="w-5 h-5"
                     aria-hidden="true"
                   />
+
                   لوحة التحكم
                 </Link>
 
@@ -469,6 +479,7 @@ export function Navbar() {
                     className="w-5 h-5"
                     aria-hidden="true"
                   />
+
                   الإعدادات
                 </Link>
 
@@ -493,6 +504,7 @@ export function Navbar() {
                     className="w-5 h-5"
                     aria-hidden="true"
                   />
+
                   تسجيل الخروج
                 </button>
               </>
@@ -516,6 +528,7 @@ export function Navbar() {
 
               </div>
             )}
+
           </div>
         </div>
       )}

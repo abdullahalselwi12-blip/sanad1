@@ -220,11 +220,13 @@ export function HomePage() {
 
       potentialAction: {
         '@type': 'SearchAction',
+
         target: {
           '@type': 'EntryPoint',
           urlTemplate:
             `${SITE_URL}/laws?search={search_term_string}`,
         },
+
         'query-input':
           'required name=search_term_string',
       },
@@ -313,7 +315,7 @@ export function HomePage() {
               <Sparkles className="w-4 h-4" />
 
               <span>
-                منصة قانونية يمنية 
+                منصة قانونية يمنية
               </span>
 
             </div>
@@ -321,6 +323,7 @@ export function HomePage() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-balance">
 
               المساعد القانوني اليمني
+
               <br />
 
               <span className="text-gold-400">
@@ -337,12 +340,21 @@ export function HomePage() {
 
             <div className="flex flex-col sm:flex-row gap-4">
 
-              <Link to="/assistant">
+              {/* 
+               * المستخدم المسجل:
+               * /assistant
+               *
+               * المستخدم غير المسجل:
+               * /login
+               */}
+
+              <Link to={user ? '/assistant' : '/login'}>
 
                 <Button
                   variant="gold"
                   className="text-base px-7 py-3"
                 >
+
                   <Bot className="w-5 h-5" />
 
                   ابدأ استشارة قانونية
@@ -352,16 +364,20 @@ export function HomePage() {
               </Link>
 
               {!user ? (
+
                 <Link to="/register">
 
                   <Button
                     variant="secondary"
                     className="text-base px-7 py-3 bg-white/10 text-white border-white/20 hover:bg-white/20"
                   >
+
                     إنشاء حساب مجاني
+
                   </Button>
 
                 </Link>
+
               ) : null}
 
             </div>
@@ -404,6 +420,7 @@ export function HomePage() {
         </div>
 
       </section>
+
 
       {/* =====================================================
           Features
@@ -463,6 +480,7 @@ export function HomePage() {
 
       </section>
 
+
       {/* =====================================================
           AI Assistant
          ===================================================== */}
@@ -500,7 +518,15 @@ export function HomePage() {
 
               </p>
 
-              <Link to="/assistant">
+              {/* 
+               * المستخدم المسجل:
+               * /assistant
+               *
+               * المستخدم غير المسجل:
+               * /login
+               */}
+
+              <Link to={user ? '/assistant' : '/login'}>
 
                 <Button
                   variant="gold"
@@ -548,6 +574,7 @@ export function HomePage() {
         </div>
 
       </section>
+
 
       {/* =====================================================
           How it works
@@ -616,6 +643,7 @@ export function HomePage() {
 
       </section>
 
+
       {/* =====================================================
           Final CTA
          ===================================================== */}
@@ -641,27 +669,35 @@ export function HomePage() {
           </p>
 
           {!user ? (
+
             <Link to="/register">
 
               <Button
                 variant="primary"
                 className="text-base px-8 py-3"
               >
+
                 إنشاء حساب مجاني
+
               </Button>
 
             </Link>
+
           ) : (
+
             <Link to={dashboardPath}>
 
               <Button
                 variant="primary"
                 className="text-base px-8 py-3"
               >
+
                 الذهاب إلى لوحة التحكم
+
               </Button>
 
             </Link>
+
           )}
 
         </div>
