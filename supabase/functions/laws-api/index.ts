@@ -1,10 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { corsHeaders, formatResponse, errorResponse } from "../_shared/xml.ts";
 
 const VALID_CATEGORIES = [
   "civil",
@@ -29,20 +24,13 @@ interface LawRow {
   updated_at: string;
 }
 
-function jsonResponse(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   if (req.method !== "GET") {
-    return jsonResponse({ error: "Method not allowed. Use GET." }, 405);
+    return errorResponse("Method not allowed. Use GET.", 405);
   }
 
   try {
@@ -62,22 +50,19 @@ Deno.serve(async (req: Request) => {
     if (rawPage !== null) {
       page = parseInt(rawPage, 10);
       if (isNaN(page) || page < 1) {
-        return jsonResponse({ error: "Parameter 'page' must be a positive integer." }, 400);
+        return errorResponse("Parameter 'page' must be a positive integer.", 400);
       }
     }
 
     if (rawLimit !== null) {
       limit = parseInt(rawLimit, 10);
       if (isNaN(limit) || limit < 1 || limit > 100) {
-        return jsonResponse({ error: "Parameter 'limit' must be an integer between 1 and 100." }, 400);
+        return errorResponse("Parameter 'limit' must be an integer between 1 and 100.", 400);
       }
     }
 
     if (category && !VALID_CATEGORIES.includes(category)) {
-      return jsonResponse(
-        { error: `Invalid category. Valid values: ${VALID_CATEGORIES.join(", ")}.` },
-        400,
-      );
+      return errorResponse(`Invalid category. Valid values: ${VALID_CATEGORIES.join(", ")}.`, 400);
     }
 
     // --- Query the existing laws table (read-only, published only) ---
@@ -87,7 +72,7 @@ Deno.serve(async (req: Request) => {
 
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error("[laws-api] Missing Supabase environment variables");
-      return jsonResponse({ error: "Server configuration error." }, 500);
+      return errorResponse("Server configuration error.", 500);
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -114,14 +99,14 @@ Deno.serve(async (req: Request) => {
 
     if (error) {
       console.error("[laws-api] Database query error:", error.message);
-      return jsonResponse({ error: "Failed to fetch laws." }, 500);
+      return errorResponse("Failed to fetch laws.", 500);
     }
 
     const laws = (data || []) as LawRow[];
     const total = count ?? 0;
     const totalPages = Math.ceil(total / limit);
 
-    return jsonResponse({
+    return formatResponse(req, "laws", {
       data: laws,
       pagination: {
         page,
@@ -134,6 +119,6 @@ Deno.serve(async (req: Request) => {
     });
   } catch (err) {
     console.error("[laws-api] Unexpected error:", err instanceof Error ? err.message : String(err));
-    return jsonResponse({ error: "An unexpected error occurred." }, 500);
+    return errorResponse("An unexpected error occurred.", 500);
   }
 });

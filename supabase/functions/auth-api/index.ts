@@ -1,17 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
-
-function jsonResponse(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
+import { corsHeaders, formatResponse, errorResponse } from "../_shared/xml.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -19,7 +7,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (req.method !== "GET") {
-    return jsonResponse({ error: "Method not allowed. Use GET." }, 405);
+    return errorResponse("Method not allowed. Use GET.", 405);
   }
 
   try {
@@ -28,12 +16,12 @@ Deno.serve(async (req: Request) => {
 
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error("[auth-api] Missing Supabase environment variables");
-      return jsonResponse({ error: "Server configuration error." }, 500);
+      return errorResponse("Server configuration error.", 500);
     }
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return jsonResponse({ error: "Authentication required." }, 401);
+      return errorResponse("Authentication required.", 401);
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -43,7 +31,7 @@ Deno.serve(async (req: Request) => {
     const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
 
     if (sessionError || !sessionData.user) {
-      return jsonResponse({ error: "Invalid or expired session." }, 401);
+      return errorResponse("Invalid or expired session.", 401);
     }
 
     const authUser = sessionData.user;
@@ -57,14 +45,14 @@ Deno.serve(async (req: Request) => {
 
     if (profileError) {
       console.error("[auth-api] Profile fetch error:", profileError.message);
-      return jsonResponse({ error: "Failed to fetch user profile." }, 500);
+      return errorResponse("Failed to fetch user profile.", 500);
     }
 
     if (!profile) {
-      return jsonResponse({ error: "Profile not found." }, 404);
+      return errorResponse("Profile not found.", 404);
     }
 
-    return jsonResponse({
+    return formatResponse(req, "auth", {
       user: profile,
       session: {
         access_token: authUser.id,
@@ -73,6 +61,6 @@ Deno.serve(async (req: Request) => {
     });
   } catch (err) {
     console.error("[auth-api] Unexpected error:", err instanceof Error ? err.message : String(err));
-    return jsonResponse({ error: "An unexpected error occurred." }, 500);
+    return errorResponse("An unexpected error occurred.", 500);
   }
 });

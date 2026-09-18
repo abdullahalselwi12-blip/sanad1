@@ -1,10 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  corsHeaders,
+  formatResponse,
+  errorResponse,
+} from "../_shared/xml.ts";
 
 interface ConsultationRow {
   id: string;
@@ -16,32 +15,22 @@ interface ConsultationRow {
   status: string;
   created_at: string;
   updated_at: string;
+
+  // Supabase returns related profiles as arrays
   profile: {
     full_name: string | null;
     email: string;
-  } | null;
+  }[] | null;
+
   lawyer: {
     specialization: string | null;
     profile: {
       full_name: string | null;
-    } | null;
-  } | null;
+    }[] | null;
+  }[] | null;
 }
 
 const VALID_STATUSES = ["pending", "answered", "closed"];
-
-function jsonResponse(
-  body: Record<string, unknown>,
-  status = 200,
-) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-    },
-  });
-}
 
 function getAuthHeader(req: Request): string | null {
   const authHeader = req.headers.get("Authorization");
@@ -54,7 +43,7 @@ function getAuthHeader(req: Request): string | null {
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
+  // CORS
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
@@ -62,6 +51,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  // Environment variables
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
@@ -70,27 +60,17 @@ Deno.serve(async (req: Request) => {
       "[consultations-api] Missing Supabase environment variables",
     );
 
-    return jsonResponse(
-      {
-        error: "Server configuration error.",
-      },
-      500,
-    );
+    return errorResponse("Server configuration error.", 500);
   }
 
   // Require authentication
-  // The caller's JWT is used so RLS can enforce ownership.
   const authHeader = getAuthHeader(req);
 
   if (!authHeader) {
-    return jsonResponse(
-      {
-        error: "Authentication required.",
-      },
-      401,
-    );
+    return errorResponse("Authentication required.", 401);
   }
 
+  // Supabase client using caller JWT
   const supabase = createClient(
     supabaseUrl,
     supabaseAnonKey,
@@ -103,26 +83,23 @@ Deno.serve(async (req: Request) => {
     },
   );
 
-  // Verify the session is valid
-  const {
-    data: sessionData,
-    error: sessionError,
-  } = await supabase.auth.getUser();
+  // Verify session
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getUser();
 
   if (sessionError || !sessionData.user) {
-    return jsonResponse(
-      {
-        error: "Invalid or expired session.",
-      },
+    return errorResponse(
+      "Invalid or expired session.",
       401,
     );
   }
 
   const userId = sessionData.user.id;
 
-  // ============================================================
-  // GET: List the current user's consultations
-  // ============================================================
+  // =========================================================
+  // GET - List current user's consultations
+  // =========================================================
+
   if (req.method === "GET") {
     try {
       const url = new URL(req.url);
@@ -140,11 +117,8 @@ Deno.serve(async (req: Request) => {
         page = parseInt(rawPage, 10);
 
         if (isNaN(page) || page < 1) {
-          return jsonResponse(
-            {
-              error:
-                "Parameter 'page' must be a positive integer.",
-            },
+          return errorResponse(
+            "Parameter 'page' must be a positive integer.",
             400,
           );
         }
@@ -154,31 +128,18 @@ Deno.serve(async (req: Request) => {
       if (rawLimit !== null) {
         limit = parseInt(rawLimit, 10);
 
-        if (
-          isNaN(limit) ||
-          limit < 1 ||
-          limit > 100
-        ) {
-          return jsonResponse(
-            {
-              error:
-                "Parameter 'limit' must be an integer between 1 and 100.",
-            },
+        if (isNaN(limit) || limit < 1 || limit > 100) {
+          return errorResponse(
+            "Parameter 'limit' must be an integer between 1 and 100.",
             400,
           );
         }
       }
 
       // Validate status
-      if (
-        status &&
-        !VALID_STATUSES.includes(status)
-      ) {
-        return jsonResponse(
-          {
-            error:
-              `Invalid status. Valid values: ${VALID_STATUSES.join(", ")}.`,
-          },
+      if (status && !VALID_STATUSES.includes(status)) {
+        return errorResponse(
+          `Invalid status. Valid values: ${VALID_STATUSES.join(", ")}.`,
           400,
         );
       }
@@ -189,25 +150,25 @@ Deno.serve(async (req: Request) => {
         .from("consultations")
         .select(
           `
-            id,
-            user_id,
-            lawyer_id,
-            subject,
-            question,
-            answer,
-            status,
-            created_at,
-            updated_at,
-            profile:profiles!consultations_user_id_fkey(
-              full_name,
-              email
-            ),
-            lawyer:lawyers(
-              specialization,
-              profile:profiles(
-                full_name
-              )
+          id,
+          user_id,
+          lawyer_id,
+          subject,
+          question,
+          answer,
+          status,
+          created_at,
+          updated_at,
+          profile:profiles!consultations_user_id_fkey(
+            full_name,
+            email
+          ),
+          lawyer:lawyers(
+            specialization,
+            profile:profiles(
+              full_name
             )
+          )
           `,
           {
             count: "exact",
@@ -238,35 +199,37 @@ Deno.serve(async (req: Request) => {
           error.message,
         );
 
-        return jsonResponse(
-          {
-            error:
-              "Failed to fetch consultations.",
-          },
+        return errorResponse(
+          "Failed to fetch consultations.",
           500,
         );
       }
 
       const consultations =
-  (data ?? []) as unknown as ConsultationRow[];
+        (data || []) as ConsultationRow[];
 
       const total = count ?? 0;
 
-      const totalPages =
-        Math.ceil(total / limit);
+      const totalPages = Math.ceil(
+        total / limit,
+      );
 
-      return jsonResponse({
-        data: consultations,
+      return formatResponse(
+        req,
+        "consultations",
+        {
+          data: consultations,
 
-        pagination: {
-          page,
-          limit,
-          total,
-          total_pages: totalPages,
-          has_next: page < totalPages,
-          has_prev: page > 1,
+          pagination: {
+            page,
+            limit,
+            total,
+            total_pages: totalPages,
+            has_next: page < totalPages,
+            has_prev: page > 1,
+          },
         },
-      });
+      );
     } catch (err) {
       console.error(
         "[consultations-api] GET error:",
@@ -275,19 +238,17 @@ Deno.serve(async (req: Request) => {
           : String(err),
       );
 
-      return jsonResponse(
-        {
-          error:
-            "An unexpected error occurred.",
-        },
+      return errorResponse(
+        "An unexpected error occurred.",
         500,
       );
     }
   }
 
-  // ============================================================
-  // POST: Create a new consultation
-  // ============================================================
+  // =========================================================
+  // POST - Create a new consultation
+  // =========================================================
+
   if (req.method === "POST") {
     try {
       let body: unknown;
@@ -295,32 +256,26 @@ Deno.serve(async (req: Request) => {
       try {
         body = await req.json();
       } catch {
-        return jsonResponse(
-          {
-            error: "Invalid JSON body.",
-          },
+        return errorResponse(
+          "Invalid JSON body.",
           400,
         );
       }
 
-      const subject =
-        (body as Record<string, unknown>)?.subject;
+      const bodyObject =
+        body as Record<string, unknown>;
 
-      const question =
-        (body as Record<string, unknown>)?.question;
-
-      const lawyerId =
-        (body as Record<string, unknown>)?.lawyer_id;
+      const subject = bodyObject?.subject;
+      const question = bodyObject?.question;
+      const lawyerId = bodyObject?.lawyer_id;
 
       // Validate subject
       if (
         typeof subject !== "string" ||
         subject.trim().length === 0
       ) {
-        return jsonResponse(
-          {
-            error: "Subject is required.",
-          },
+        return errorResponse(
+          "Subject is required.",
           400,
         );
       }
@@ -330,36 +285,29 @@ Deno.serve(async (req: Request) => {
         typeof question !== "string" ||
         question.trim().length === 0
       ) {
-        return jsonResponse(
-          {
-            error: "Question is required.",
-          },
+        return errorResponse(
+          "Question is required.",
           400,
         );
       }
 
       // Validate subject length
       if (subject.trim().length > 200) {
-        return jsonResponse(
-          {
-            error:
-              "Subject must be 200 characters or less.",
-          },
+        return errorResponse(
+          "Subject must be 200 characters or less.",
           400,
         );
       }
 
       // Validate question length
       if (question.trim().length > 5000) {
-        return jsonResponse(
-          {
-            error:
-              "Question must be 5000 characters or less.",
-          },
+        return errorResponse(
+          "Question must be 5000 characters or less.",
           400,
         );
       }
 
+      // Prepare insert data
       const insertData: Record<string, unknown> = {
         user_id: userId,
         subject: subject.trim(),
@@ -376,6 +324,7 @@ Deno.serve(async (req: Request) => {
           lawyerId.trim();
       }
 
+      // Insert consultation
       const {
         data,
         error,
@@ -384,15 +333,15 @@ Deno.serve(async (req: Request) => {
         .insert(insertData)
         .select(
           `
-            id,
-            user_id,
-            lawyer_id,
-            subject,
-            question,
-            answer,
-            status,
-            created_at,
-            updated_at
+          id,
+          user_id,
+          lawyer_id,
+          subject,
+          question,
+          answer,
+          status,
+          created_at,
+          updated_at
           `,
         )
         .single();
@@ -403,16 +352,16 @@ Deno.serve(async (req: Request) => {
           error.message,
         );
 
-        return jsonResponse(
-          {
-            error:
-              "Failed to create consultation.",
-          },
+        return errorResponse(
+          "Failed to create consultation.",
           500,
         );
       }
 
-      return jsonResponse(
+      // JSON by default, XML when requested
+      return formatResponse(
+        req,
+        "consultation",
         {
           data,
         },
@@ -426,23 +375,19 @@ Deno.serve(async (req: Request) => {
           : String(err),
       );
 
-      return jsonResponse(
-        {
-          error:
-            "An unexpected error occurred.",
-        },
+      return errorResponse(
+        "An unexpected error occurred.",
         500,
       );
     }
   }
 
-  // ============================================================
+  // =========================================================
   // Unsupported method
-  // ============================================================
-  return jsonResponse(
-    {
-      error: "Method not allowed.",
-    },
+  // =========================================================
+
+  return errorResponse(
+    "Method not allowed.",
     405,
   );
 });

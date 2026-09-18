@@ -5,19 +5,40 @@ import { Button } from '@/components/ui/Button';
 import { DataTable, type Column } from '@/components/admin/DataTable';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/contexts/ToastContext';
-import type { Lawyer } from '@/types';
+import type { Lawyer, Profile } from '@/types';
+
+interface PendingLawyer {
+  id: string;
+  profile: Profile;
+  isPending: true;
+}
+
+type LawyerRow = (Lawyer & { isPending?: false }) | PendingLawyer;
 
 export function AdminLawyers() {
-  const [lawyers, setLawyers] = useState<Lawyer[]>([]);
-  const [filtered, setFiltered] = useState<Lawyer[]>([]);
+  const [rows, setRows] = useState<LawyerRow[]>([]);
+  const [filtered, setFiltered] = useState<LawyerRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [approving, setApproving] = useState<string | null>(null);
   const { toast } = useToast();
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('lawyers').select('*, profile:profiles(*)').order('created_at', { ascending: false });
-    setLawyers((data || []) as Lawyer[]);
-    setFiltered((data || []) as Lawyer[]);
+    const [{ data: lawyerData }, { data: profileData }] = await Promise.all([
+      supabase.from('lawyers').select('*, profile:profiles(*)').order('created_at', { ascending: false }),
+      supabase.from('profiles').select('*').eq('role', 'lawyer').eq('is_active', true).order('created_at', { ascending: false }),
+    ]);
+
+    const existing = (lawyerData || []) as Lawyer[];
+    const profiles = (profileData || []) as Profile[];
+    const existingIds = new Set(existing.map((l) => l.profile_id));
+    const pending: PendingLawyer[] = profiles
+      .filter((p) => !existingIds.has(p.id))
+      .map((p) => ({ id: p.id, profile: p, isPending: true as const }));
+
+    const combined: LawyerRow[] = [...existing.map((l) => ({ ...l, isPending: false as const })), ...pending];
+    setRows(combined);
+    setFiltered(combined);
     setLoading(false);
   }, []);
 
@@ -30,7 +51,19 @@ export function AdminLawyers() {
     load();
   };
 
-  const columns: Column<Lawyer>[] = [
+  const approvePending = async (p: PendingLawyer) => {
+    setApproving(p.id);
+    const { error } = await supabase.from('lawyers').insert({
+      profile_id: p.id,
+      is_verified: true,
+    });
+    setApproving(null);
+    if (error) { toast('حدث خطأ أثناء الاعتماد', 'error'); return; }
+    toast('تم اعتماد المحامي بنجاح', 'success');
+    load();
+  };
+
+  const columns: Column<LawyerRow>[] = [
     {
       key: 'name', label: 'المحامي', render: (l) => (
         <div className="flex items-center gap-2">
@@ -39,18 +72,42 @@ export function AdminLawyers() {
         </div>
       ),
     },
-    { key: 'specialization', label: 'التخصص', render: (l) => <span className="text-sm">{l.specialization || '—'}</span> },
-    { key: 'license_number', label: 'رقم الرخصة', render: (l) => <span className="text-sm">{l.license_number || '—'}</span> },
-    { key: 'rating', label: 'التقييم', render: (l) => <span className="text-sm">{l.rating ? Number(l.rating).toFixed(1) : '—'}</span> },
-    { key: 'is_verified', label: 'الاعتماد', render: (l) => <Badge variant={l.is_verified ? 'success' : 'gold'}>{l.is_verified ? 'معتمد' : 'قيد المراجعة'}</Badge> },
+    { key: 'specialization', label: 'التخصص', render: (l) => <span className="text-sm">{!l.isPending ? (l.specialization || '—') : '—'}</span> },
+    { key: 'license_number', label: 'رقم الرخصة', render: (l) => <span className="text-sm">{!l.isPending ? (l.license_number || '—') : '—'}</span> },
+    { key: 'rating', label: 'التقييم', render: (l) => <span className="text-sm">{!l.isPending && l.rating ? Number(l.rating).toFixed(1) : '—'}</span> },
+    { key: 'is_verified', label: 'الاعتماد', render: (l) => (
+      <Badge variant={l.isPending ? 'gold' : (l.is_verified ? 'success' : 'gold')}>
+        {l.isPending ? 'قيد المراجعة' : (l.is_verified ? 'معتمد' : 'قيد المراجعة')}
+      </Badge>
+    ) },
     {
       key: 'actions', label: 'إجراء', render: (l) => (
-        <Button variant={l.is_verified ? 'ghost' : 'primary'} onClick={() => toggleVerify(l)} className="text-xs">
-          {l.is_verified ? 'إلغاء الاعتماد' : 'اعتماد'}
-        </Button>
+        l.isPending ? (
+          <Button
+            variant="primary"
+            onClick={() => approvePending(l)}
+            loading={approving === l.id}
+            className="text-xs"
+          >
+            اعتماد
+          </Button>
+        ) : (
+          <Button variant={l.is_verified ? 'ghost' : 'primary'} onClick={() => toggleVerify(l)} className="text-xs">
+            {l.is_verified ? 'إلغاء الاعتماد' : 'اعتماد'}
+          </Button>
+        )
       ),
     },
   ];
+
+  const handleSearch = (q: string) => {
+    setFiltered(rows.filter((l) => {
+      const name = l.profile?.full_name || '';
+      if (name.includes(q)) return true;
+      if (!l.isPending && (l.specialization || '').includes(q)) return true;
+      return false;
+    }));
+  };
 
   return (
     <DataTable
@@ -59,7 +116,7 @@ export function AdminLawyers() {
       columns={columns}
       loading={loading}
       rowKey={(l) => l.id}
-      onSearch={(q) => setFiltered(lawyers.filter((l) => (l.profile?.full_name || '').includes(q) || (l.specialization || '').includes(q)))}
+      onSearch={handleSearch}
       searchPlaceholder="ابحث بالاسم أو التخصص..."
       emptyTitle="لا يوجد محامون"
       emptyDescription="لم يسجل أي محامٍ بعد"
