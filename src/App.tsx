@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -439,16 +439,30 @@ export default function App() {
                   }
                 >
 
+                  {/* المسار الرئيسي للمحامي */}
                   <Route
                     path="/lawyer"
+                    element={
+                      <Navigate
+                        to="/lawyer/dashboard"
+                        replace
+                      />
+                    }
+                  />
+
+                  {/* لوحة تحكم المحامي */}
+                  <Route
+                    path="/lawyer/dashboard"
                     element={<LawyerDashboard />}
                   />
 
+                  {/* استشارات المحامي */}
                   <Route
                     path="/lawyer/consultations"
                     element={<LawyerConsultations />}
                   />
 
+                  {/* إعدادات المحامي */}
                   <Route
                     path="/lawyer/settings"
                     element={<SettingsPage />}
